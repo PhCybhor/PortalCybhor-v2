@@ -1,0 +1,8 @@
+# Hostinger / Apache — UTF-8 e index padrão
+AddDefaultCharset UTF-8
+DirectoryIndex index.html
+
+<IfModule mod_mime.c>
+  AddType text/css .css
+  AddType application/javascript .js
+</IfModule>

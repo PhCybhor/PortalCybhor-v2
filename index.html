@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Portal Cybhor v2 — iniciativas, projetos, commits e operação da equipe.">
+  <title>Portal Cybhor v2</title>
+  <link rel="stylesheet" href="assets/css/theme.css">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
+  <script src="assets/js/progress-chat.js" defer></script>
+  <script src="assets/js/commit-analyzer.js" defer></script>
+  <script src="assets/js/team-ops.js" defer></script>
+  <script src="assets/js/app.js" defer></script>
+</head>
+<body>
+
+  <div id="auth-screen" class="auth-screen">
+    <form id="login-form" class="auth-card" autocomplete="on">
+      <div class="brand-row">
+        <span class="brand-mark">C</span>
+        CYBHOR
+        <span class="ver-pill">v2</span>
+      </div>
+      <h1>Entrar</h1>
+      <p class="sub">Organize a equipe e as tarefas do dia.</p>
+      <div id="auth-error" class="auth-error hidden" role="alert"></div>
+      <div class="field">
+        <label for="login-email">E-mail</label>
+        <input class="input" id="login-email" type="email" required value="admin@cybhor.com">
+      </div>
+      <div class="field">
+        <label for="login-password">Senha</label>
+        <input class="input" id="login-password" type="password" required value="cybhor123">
+      </div>
+      <button class="btn btn-primary btn-block" type="submit" style="height:40px">Entrar</button>
+      <div class="auth-hint">
+        Demo: <code>admin@cybhor.com</code> / <code>cybhor123</code><br>
+        Dados no navegador · pronto para Hostinger.
+      </div>
+    </form>
+  </div>
+
+  <div id="sidebar-backdrop" class="sidebar-backdrop" hidden></div>
+
+  <div id="app-shell" class="app-shell hidden">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand-row">
+        <span class="brand-mark">C</span>
+        CYBHOR
+        <span class="ver-pill" style="border-color:#3a4656;color:#9aa5b5">v2</span>
+      </div>
+      <nav class="side-nav" aria-label="Principal">
+        <button type="button" class="is-active" data-view="dashboard">Início</button>
+        <button type="button" data-view="foco">Hoje</button>
+        <button type="button" data-view="tarefas">Tarefas</button>
+        <button type="button" data-view="equipes">Pessoas</button>
+        <button type="button" data-view="projetos">Projetos</button>
+        <button type="button" data-view="desenvolvimento">Código</button>
+        <div class="side-label">Mais</div>
+        <button type="button" data-view="iniciativas">Campanhas</button>
+        <button type="button" data-view="assistente">Chat</button>
+        <button type="button" data-view="financeiro">Dinheiro</button>
+        <button type="button" data-view="ideias">Ideias</button>
+        <button type="button" data-view="atividade">Histórico</button>
+      </nav>
+      <div class="side-foot">
+        <button class="btn btn-sm" type="button" id="btn-export" style="width:100%;justify-content:center;background:transparent;color:#c5ced8;border-color:#3a4656">Salvar cópia</button>
+        <button class="btn btn-sm" type="button" id="btn-logout" style="width:100%;justify-content:center;background:transparent;color:#c5ced8;border-color:#3a4656">Sair</button>
+      </div>
+    </aside>
+
+    <div class="main-col">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="icon-btn menu-toggle" id="btn-menu" type="button" aria-label="Menu">☰</button>
+          <h1 id="page-title">Início</h1>
+        </div>
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
+          <input id="global-search" type="search" placeholder="Buscar…" aria-label="Buscar">
+        </div>
+        <div class="topbar-actions">
+          <button class="icon-btn" id="btn-theme" type="button" title="Tema" aria-label="Tema">◐</button>
+          <button class="icon-btn" id="btn-reset" type="button" title="Restaurar exemplo" aria-label="Reset">↺</button>
+          <div class="user-chip">
+            <img class="avatar" src="https://i.pravatar.cc/64?img=12" alt="">
+            <div>
+              <strong id="user-name">Usuário</strong>
+              <span id="user-role">Admin</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="page">
+        <!-- INÍCIO (simples) -->
+        <section class="view is-active" data-view="dashboard">
+          <p class="simple-lead">Faça só estes 3 passos. O resto fica no menu.</p>
+
+          <div class="simple-steps">
+            <button type="button" class="simple-step" data-go="equipes">
+              <span class="simple-num">1</span>
+              <strong>Pessoas</strong>
+              <span>Quem trabalha em cada time</span>
+            </button>
+            <button type="button" class="simple-step" data-go="tarefas">
+              <span class="simple-num">2</span>
+              <strong>Tarefas</strong>
+              <span>O que fazer · arraste para Concluído</span>
+            </button>
+            <button type="button" class="simple-step" data-go="foco">
+              <span class="simple-num">3</span>
+              <strong>Hoje</strong>
+              <span>Lista do que fazer agora</span>
+            </button>
+          </div>
+
+          <div class="grid grid-2" style="margin-top:16px">
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Fazer agora</h2>
+                <button class="btn btn-sm" type="button" data-go="foco">Ver lista</button>
+              </div>
+              <div id="focus-next"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Ranking da semana</h2>
+                <button class="btn btn-sm" type="button" data-go="equipes">Ver pessoas</button>
+              </div>
+              <div id="workload-list"></div>
+            </section>
+          </div>
+
+          <div class="actions" style="margin-top:16px">
+            <button class="btn btn-primary" type="button" id="btn-add-task">+ Nova tarefa</button>
+            <button class="btn" type="button" id="btn-add-project">+ Projeto</button>
+            <button class="btn" type="button" data-go="desenvolvimento">Subir código</button>
+          </div>
+
+          <!-- IDs ocultos para o JS continuar funcionando -->
+          <div class="hidden" aria-hidden="true">
+            <span id="kpi-tasks"></span><span id="kpi-rate"></span><span id="kpi-projects"></span><span id="kpi-balance"></span>
+            <div id="okr-ring" style="--pct:0"><span id="okr-overall"></span></div>
+            <span id="okr-client-val"></span><div id="okr-client-bar"></div>
+            <span id="okr-delivery-val"></span><div id="okr-delivery-bar"></div>
+            <span id="okr-finance-val"></span><div id="okr-finance-bar"></div>
+            <canvas id="chart-performance"></canvas>
+            <div id="events-list"></div>
+            <div id="activity-preview"></div>
+            <div id="notices-list"></div>
+            <tbody id="projects-body"></tbody>
+            <span id="count-todo"></span><span id="count-doing"></span><span id="count-done"></span>
+            <div id="kanban-todo"></div><div id="kanban-doing"></div><div id="kanban-done"></div>
+            <button type="button" id="btn-add-event"></button>
+            <button type="button" id="btn-add-notice"></button>
+          </div>
+        </section>
+
+        <!-- HOJE -->
+        <section class="view" data-view="foco">
+          <div class="page-head">
+            <div>
+              <p class="lead" style="margin:0">O que fazer hoje, na ordem certa. Clique em <strong>Concluir</strong> quando terminar.</p>
+            </div>
+            <button class="btn btn-primary" type="button" onclick="document.getElementById('btn-add-task').click()">+ Tarefa</button>
+          </div>
+          <div class="chat-live" id="focus-summary" style="margin-bottom:16px"></div>
+          <section class="panel">
+            <div id="focus-list"></div>
+          </section>
+        </section>
+
+        <!-- PESSOAS -->
+        <section class="view" data-view="equipes">
+          <div class="page-head">
+            <div>
+              <p class="lead" style="margin:0">Times e pessoas. Quem entrega mais, pontua mais — horas não contam.</p>
+            </div>
+            <div class="actions">
+              <button class="btn" type="button" id="btn-add-member">+ Pessoa</button>
+              <button class="btn btn-primary" type="button" id="btn-add-team">+ Time</button>
+            </div>
+          </div>
+          <div class="grid grid-2">
+            <div>
+              <h2 style="font-size:0.95rem;margin:0 0 10px">Times</h2>
+              <div id="teams-list" class="initiatives-grid"></div>
+            </div>
+            <section class="panel">
+              <div class="panel-head"><h2>Pessoas</h2></div>
+              <div id="members-list"></div>
+              <div class="panel-head" style="margin-top:18px"><h2>Ranking (pontos dos últimos 7 dias)</h2></div>
+              <div id="workload-list-dup"></div>
+              <div class="points-rules">
+                <strong>Como pontua</strong>
+                <ul>
+                  <li>Tarefa concluída: Alta 30 · Média 20 · Baixa 10</li>
+                  <li>Entregou até o prazo: +10</li>
+                  <li>Commit analisado: 5 + % que o projeto subiu</li>
+                  <li>Tarefa criada já como concluída ou sem responsável: 0</li>
+                </ul>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <!-- INICIATIVAS -->
+        <section class="view" data-view="iniciativas">
+          <div class="page-head">
+            <div>
+              <p class="lead" style="margin:0">Uma campanha grande que junta vários projetos (ex.: lançamento).</p>
+            </div>
+            <button class="btn btn-primary" type="button" id="btn-add-initiative">+ Nova iniciativa</button>
+          </div>
+          <div id="initiatives-list" class="initiatives-grid"></div>
+        </section>
+
+        <!-- PROJETOS -->
+        <section class="view" data-view="projetos">
+          <div class="page-head">
+            <div><p class="lead" style="margin:0">Lista de projetos. A % sobe quando você manda código em <strong>Código</strong>.</p></div>
+            <button class="btn btn-primary" type="button" onclick="document.getElementById('btn-add-project').click()">+ Projeto</button>
+          </div>
+          <section class="panel">
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Projeto</th>
+                    <th>Campanha</th>
+                    <th>Progresso</th>
+                    <th>Responsável</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="projects-body-dup"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <!-- TAREFAS -->
+        <section class="view" data-view="tarefas">
+          <div class="page-head">
+            <div><p class="lead" style="margin:0">Arraste o card para <strong>Concluído</strong> quando terminar.</p></div>
+            <button class="btn btn-primary" type="button" onclick="document.getElementById('btn-add-task').click()">+ Tarefa</button>
+          </div>
+          <section class="panel">
+            <div class="kanban">
+              <div class="kanban-col" data-column="todo"><h3>Para fazer</h3><div id="kanban-todo-dup"></div></div>
+              <div class="kanban-col" data-column="doing"><h3>Em andamento</h3><div id="kanban-doing-dup"></div></div>
+              <div class="kanban-col" data-column="done"><h3>Concluído</h3><div id="kanban-done-dup"></div></div>
+            </div>
+          </section>
+        </section>
+
+        <!-- DEV -->
+        <section class="view" data-view="desenvolvimento">
+          <div class="page-head">
+            <div><p class="lead" style="margin:0">Cole o código do commit. O sistema calcula a % sozinho (não digite %).</p></div>
+          </div>
+          <div class="chat-layout">
+            <section class="panel">
+              <form id="commit-form">
+                <div class="grid grid-2" style="margin-bottom:0">
+                  <div class="field">
+                    <label for="commit-project">Projeto</label>
+                    <select class="select" id="commit-project" required></select>
+                  </div>
+                  <div class="field">
+                    <label for="commit-author">Quem fez</label>
+                    <select class="select" id="commit-author" required></select>
+                  </div>
+                </div>
+                <div class="grid grid-2" style="margin-bottom:0">
+                  <div class="field">
+                    <label for="commit-hash">Hash (opcional)</label>
+                    <input class="input" id="commit-hash" maxlength="64" placeholder="a1b2c3d">
+                  </div>
+                  <div class="field">
+                    <label for="commit-message">Mensagem</label>
+                    <input class="input" id="commit-message" required placeholder="feat: …">
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="commit-diff">Diff / código</label>
+                  <textarea class="textarea" id="commit-diff" required style="min-height:220px;font-family:ui-monospace,monospace;font-size:0.82rem" placeholder="git show / git diff"></textarea>
+                </div>
+                <div class="actions">
+                  <button class="btn btn-primary" type="submit">Analisar commit</button>
+                  <button class="btn" type="button" id="btn-commit-sample">Colar exemplo</button>
+                </div>
+              </form>
+              <div id="commit-result" class="commit-result hidden"></div>
+            </section>
+            <aside class="panel">
+              <div class="panel-head"><h2>Histórico</h2><span class="meta" id="commit-count">0</span></div>
+              <div id="commits-list"></div>
+            </aside>
+          </div>
+        </section>
+
+        <!-- ASSISTENTE -->
+        <section class="view" data-view="assistente">
+          <div class="page-head">
+            <div><p class="lead" style="margin:0">Escreva o que terminou, tipo: “Concluí a API de notificações”.</p></div>
+          </div>
+          <div class="chat-layout">
+            <section class="panel chat-panel">
+              <div class="chat-live" id="chat-live-okrs"></div>
+              <div id="chat-messages" class="chat-messages"></div>
+              <div id="chat-typing" class="chat-typing hidden">Analisando…</div>
+              <form id="chat-form" class="chat-form">
+                <input class="input" id="chat-input" maxlength="400" placeholder="Ex.: Concluí a API de notificações" required>
+                <button class="btn btn-primary" type="submit">Enviar</button>
+              </form>
+              <div class="chat-examples">
+                <span class="meta">Atalhos:</span>
+                <button type="button" class="btn btn-sm" data-chat-example="Concluí a API de notificações">Concluí API</button>
+                <button type="button" class="btn btn-sm" data-chat-example="Estou fazendo o Layout mobile do portal">Em andamento</button>
+              </div>
+            </section>
+            <aside class="panel">
+              <h2 style="margin:0 0 10px;font-size:0.95rem">Dica</h2>
+              <ol class="chat-help-list">
+                <li>Use para dizer o que acabou.</li>
+                <li>Para % do projeto, use o menu <strong>Código</strong>.</li>
+              </ol>
+            </aside>
+          </div>
+        </section>
+
+        <!-- FINANCEIRO -->
+        <section class="view" data-view="financeiro">
+          <div class="page-head">
+            <div><p class="lead" style="margin:0">Entradas e saídas. Saldo: <strong id="finance-balance">R$ 0</strong></p></div>
+            <button class="btn btn-primary" type="button" id="btn-add-finance">+ Lançamento</button>
+          </div>
+          <div class="grid grid-2">
+            <section class="panel">
+              <div class="panel-head"><h2>Receitas x Despesas</h2></div>
+              <div class="chart-wrap"><canvas id="chart-finance"></canvas></div>
+            </section>
+            <section class="panel">
+              <div class="panel-head"><h2>Lançamentos</h2></div>
+              <div id="finance-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <!-- IDEIAS -->
+        <section class="view" data-view="ideias">
+          <div class="page-head">
+            <div><p class="lead" style="margin:0">Sugestões da equipe. Clique para votar.</p></div>
+            <button class="btn btn-primary" type="button" id="btn-add-idea">+ Ideia</button>
+          </div>
+          <section class="panel"><div id="ideas-list"></div></section>
+        </section>
+
+        <!-- ATIVIDADE -->
+        <section class="view" data-view="atividade">
+          <div class="page-head">
+            <div><p class="lead" style="margin:0">O que aconteceu recentemente.</p></div>
+          </div>
+          <section class="panel">
+            <div id="activity-full" class="activity-list"></div>
+          </section>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- MODALS (same as v1 capabilities) -->
+  <div id="modal-task" class="modal-backdrop hidden">
+    <form id="form-task" class="modal" style="width:min(480px,100%)">
+      <h3>Nova tarefa</h3>
+      <div class="field"><label for="task-title">Título</label><input class="input" id="task-title" required></div>
+      <div class="grid grid-2" style="margin-bottom:0">
+        <div class="field">
+          <label for="task-column">Coluna</label>
+          <select class="select" id="task-column">
+            <option value="todo">Para fazer</option>
+            <option value="doing">Em andamento</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="task-priority">Prioridade</label>
+          <select class="select" id="task-priority">
+            <option>Alta</option>
+            <option selected>Média</option>
+            <option>Baixa</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid grid-2" style="margin-bottom:0">
+        <div class="field">
+          <label for="task-assignee">Responsável</label>
+          <select class="select" id="task-assignee"></select>
+        </div>
+        <div class="field">
+          <label for="task-team">Equipe</label>
+          <select class="select" id="task-team"></select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="task-due">Prazo</label>
+        <input class="input" id="task-due" type="date">
+      </div>
+      <p class="meta" style="margin:0 0 12px">Pontos ao concluir: Alta 30 · Média 20 · Baixa 10 (+10 se for no prazo).</p>
+      <div class="modal-actions">
+        <button class="btn" type="button" data-close-modal>Cancelar</button>
+        <button class="btn btn-primary" type="submit">Salvar</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="modal-team" class="modal-backdrop hidden">
+    <form id="form-team" class="modal">
+      <h3>Nova equipe</h3>
+      <div class="field"><label for="team-name">Nome</label><input class="input" id="team-name" required placeholder="Squad Produto"></div>
+      <div class="field">
+        <label for="team-area">Área</label>
+        <select class="select" id="team-area"></select>
+      </div>
+      <div class="field">
+        <label for="team-lead">Líder</label>
+        <select class="select" id="team-lead"></select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" type="button" data-close-modal>Cancelar</button>
+        <button class="btn btn-primary" type="submit">Criar</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="modal-member" class="modal-backdrop hidden">
+    <form id="form-member" class="modal">
+      <h3>Novo membro</h3>
+      <div class="field"><label for="member-name">Nome</label><input class="input" id="member-name" required></div>
+      <div class="field"><label for="member-role">Papel</label><input class="input" id="member-role" required placeholder="Engenheiro"></div>
+      <div class="field">
+        <label for="member-team">Equipe</label>
+        <select class="select" id="member-team"></select>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn" type="button" data-close-modal>Cancelar</button>
+        <button class="btn btn-primary" type="submit">Adicionar</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="modal-project" class="modal-backdrop hidden">
+    <form id="form-project" class="modal">
+      <h3>Novo projeto</h3>
+      <div class="field"><label for="project-name">Nome</label><input class="input" id="project-name" required></div>
+      <div class="field"><label for="project-owner">Responsável</label><input class="input" id="project-owner" required value="Gabriel Silva"></div>
+      <div class="field">
+        <label for="project-initiative">Campanha (opcional)</label>
+        <select class="select" id="project-initiative"><option value="">Nenhuma</option></select>
+      </div>
+      <p class="meta" style="margin:0 0 12px">Começa em 0%. Sobe só quando alguém manda código.</p>
+      <div class="field">
+        <label for="project-status">Status</label>
+        <select class="select" id="project-status">
+          <option value="progress">Em andamento</option>
+          <option value="wait">Aguardando</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" type="button" data-close-modal>Cancelar</button>
+        <button class="btn btn-primary" type="submit">Salvar</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="modal-initiative" class="modal-backdrop hidden">
+    <form id="form-initiative" class="modal" style="width:min(520px,100%)">
+      <h3>Nova iniciativa</h3>
+      <div class="field"><label for="initiative-name">Nome</label><input class="input" id="initiative-name" required placeholder="Campanha / lançamento…"></div>
+      <div class="field"><label for="initiative-desc">Descrição</label><textarea class="textarea" id="initiative-desc"></textarea></div>
+      <div class="field"><label for="initiative-owner">Responsável</label><input class="input" id="initiative-owner" required value="Gabriel Silva"></div>
+      <div class="field"><label>Áreas</label><div id="initiative-areas" class="check-grid"></div></div>
+      <div class="field"><label>Projetos</label><div id="initiative-projects" class="check-grid"></div></div>
+      <div class="modal-actions">
+        <button class="btn" type="button" data-close-modal>Cancelar</button>
+        <button class="btn btn-primary" type="submit">Criar</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="modal-event" class="modal-backdrop hidden">
+    <form id="form-event" class="modal">
+      <h3>Compromisso</h3>
+      <div class="field"><label for="event-time">Horário</label><input class="input" id="event-time" type="time" required value="10:00"></div>
+      <div class="field"><label for="event-title">Título</label><input class="input" id="event-title" required></div>
+      <div class="field"><label for="event-detail">Detalhe</label><input class="input" id="event-detail"></div>
+      <div class="modal-actions">
+        <button class="btn" type="button" data-close-modal>Cancelar</button>
+        <button class="btn btn-primary" type="submit">Salvar</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="modal-notice" class="modal-backdrop hidden">
+    <form id="form-notice" class="modal">
+      <h3>Aviso</h3>
+      <div class="field"><label for="notice-title">Título</label><input class="input" id="notice-title" required></div>
+      <div class="field"><label for="notice-body">Texto</label><textarea class="textarea" id="notice-body" required></textarea></div>
+      <div class="field">
+        <label for="notice-tone">Cor</label>
+        <select class="select" id="notice-tone">
+          <option value="blue">Azul</option>
+          <option value="orange">Laranja</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" type="button" data-close-modal>Cancelar</button>
+        <button class="btn btn-primary" type="submit">Publicar</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="modal-finance" class="modal-backdrop hidden">
+    <form id="form-finance" class="modal">
+      <h3>Lançamento</h3>
+      <div class="field">
+        <label for="finance-type">Tipo</label>
+        <select class="select" id="finance-type">
+          <option value="in">Receita</option>
+          <option value="out">Despesa</option>
+        </select>
+      </div>
+      <div class="field"><label for="finance-desc">Descrição</label><input class="input" id="finance-desc" required></div>
+      <div class="field"><label for="finance-amount">Valor</label><input class="input" id="finance-amount" type="number" min="0" step="0.01" required></div>
+      <div class="modal-actions">
+        <button class="btn" type="button" data-close-modal>Cancelar</button>
+        <button class="btn btn-primary" type="submit">Salvar</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="modal-idea" class="modal-backdrop hidden">
+    <form id="form-idea" class="modal">
+      <h3>Ideia</h3>
+      <div class="field"><label for="idea-title">Texto</label><input class="input" id="idea-title" required></div>
+      <div class="modal-actions">
+        <button class="btn" type="button" data-close-modal>Cancelar</button>
+        <button class="btn btn-primary" type="submit">Salvar</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="toast" class="toast" role="status"></div>
+</body>
+</html>
