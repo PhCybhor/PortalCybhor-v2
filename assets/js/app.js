@@ -190,7 +190,7 @@
       return;
     }
 
-    err.textContent = "E-mail ou senha incorretos. Use admin@cybhor.com / cybhor123";
+    err.textContent = "E-mail ou senha incorretos.";
     err.classList.remove("hidden");
   }
 
@@ -1009,7 +1009,8 @@ new file mode 100644
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
   /* ——— Charts ——— */
