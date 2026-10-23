@@ -5,6 +5,11 @@ DirectoryIndex index.html
 Options -Indexes
 ServerSignature Off
 
+# PHP da API
+<IfModule mod_php.c>
+  php_flag display_errors Off
+</IfModule>
+
 <IfModule mod_mime.c>
   AddType text/css .css
   AddType application/javascript .js

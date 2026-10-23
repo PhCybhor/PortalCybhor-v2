@@ -1,17 +1,11 @@
 /**
  * Portal Cybhor v2 — shell com sidebar, atividade e backup.
- * Dados ficam no localStorage do navegador (sem servidor).
+ * Dados e autenticação via API PHP + MySQL (Hostinger).
  */
 (function () {
-  const STORAGE_KEY = "cybhor_site_v2_2";
+  const API_BASE = "/api";
+  const STORAGE_KEY = "cybhor_site_v2_2"; // cache local opcional (offline curto)
   const SESSION_KEY = "cybhor_session_v1";
-
-  const DEMO_USER = {
-    email: "admin@cybhor.com",
-    password: "cybhor123",
-    name: "Gabriel Silva",
-    role: "Admin",
-  };
 
   const AREAS = [
     { id: "desenvolvimento", label: "Desenvolvimento" },
@@ -91,9 +85,36 @@
     commits: [],
   });
 
-  let data = loadData();
+  let data = defaultData();
   let charts = { performance: null, finance: null };
   let dragTaskId = null;
+  let saveTimer = null;
+  let apiReady = false;
+
+  async function api(path, options = {}) {
+    const res = await fetch(API_BASE + path, {
+      credentials: "same-origin",
+      headers: {
+        Accept: "application/json",
+        ...(options.body ? { "Content-Type": "application/json" } : {}),
+        ...(options.headers || {}),
+      },
+      ...options,
+    });
+    let payload = null;
+    try {
+      payload = await res.json();
+    } catch {
+      payload = null;
+    }
+    if (!res.ok) {
+      const err = new Error((payload && payload.error) || "Falha na API");
+      err.status = res.status;
+      err.payload = payload;
+      throw err;
+    }
+    return payload;
+  }
 
   function uid() {
     return "id_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
@@ -103,29 +124,49 @@
     return new Date().toISOString().slice(0, 10);
   }
 
-  function loadData() {
+  function mergeState(parsed) {
+    const base = defaultData();
+    if (!parsed || typeof parsed !== "object") return base;
+    return {
+      ...base,
+      ...parsed,
+      chatLog: Array.isArray(parsed.chatLog) && parsed.chatLog.length ? parsed.chatLog : base.chatLog,
+      commits: Array.isArray(parsed.commits) ? parsed.commits : [],
+      teams: Array.isArray(parsed.teams) ? parsed.teams : base.teams,
+      members: Array.isArray(parsed.members) ? parsed.members : base.members,
+      initiatives: Array.isArray(parsed.initiatives) ? parsed.initiatives : base.initiatives,
+      okrs: { ...base.okrs, ...(parsed.okrs || {}) },
+    };
+  }
+
+  async function loadDataFromApi() {
+    const res = await api("/state");
+    data = mergeState(res.data);
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return defaultData();
-      const parsed = JSON.parse(raw);
-      const base = defaultData();
-      return {
-        ...base,
-        ...parsed,
-        chatLog: Array.isArray(parsed.chatLog) && parsed.chatLog.length ? parsed.chatLog : base.chatLog,
-        commits: Array.isArray(parsed.commits) ? parsed.commits : [],
-        teams: Array.isArray(parsed.teams) ? parsed.teams : base.teams,
-        members: Array.isArray(parsed.members) ? parsed.members : base.members,
-        initiatives: Array.isArray(parsed.initiatives) ? parsed.initiatives : base.initiatives,
-        okrs: { ...base.okrs, ...(parsed.okrs || {}) },
-      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch {
-      return defaultData();
+      /* ignore quota */
     }
+    apiReady = true;
+    return data;
   }
 
   function saveData() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch {
+      /* ignore */
+    }
+    if (!apiReady) return;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(async () => {
+      try {
+        await api("/state", { method: "PUT", body: JSON.stringify({ data }) });
+      } catch (err) {
+        console.error(err);
+        toast("Não foi possível salvar no MySQL");
+      }
+    }, 400);
   }
 
   function getSession() {
@@ -175,26 +216,35 @@
     document.getElementById("app-shell").classList.add("hidden");
   }
 
-  function handleLogin(e) {
+  async function handleLogin(e) {
     e.preventDefault();
     const email = document.getElementById("login-email").value.trim().toLowerCase();
     const password = document.getElementById("login-password").value;
     const err = document.getElementById("auth-error");
+    err.classList.add("hidden");
 
-    if (email === DEMO_USER.email && password === DEMO_USER.password) {
-      err.classList.add("hidden");
-      const user = { name: DEMO_USER.name, role: DEMO_USER.role, email };
-      setSession(user);
-      showApp(user);
+    try {
+      const res = await api("/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+      setSession(res.user);
+      await loadDataFromApi();
+      showApp(res.user);
       toast("Bem-vindo ao Portal Cybhor v2");
-      return;
+    } catch (ex) {
+      err.textContent = (ex && ex.payload && ex.payload.error) || "E-mail ou senha incorretos.";
+      err.classList.remove("hidden");
     }
-
-    err.textContent = "E-mail ou senha incorretos.";
-    err.classList.remove("hidden");
   }
 
-  function handleLogout() {
+  async function handleLogout() {
+    try {
+      await api("/logout", { method: "POST", body: "{}" });
+    } catch {
+      /* ignore */
+    }
+    apiReady = false;
     setSession(null);
     showAuth();
     toast("Sessão encerrada");
@@ -1589,12 +1639,25 @@ new file mode 100644
     });
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
     const savedTheme = localStorage.getItem("cybhor_theme") || "light";
     applyTheme(savedTheme);
     wire();
-    const session = getSession();
-    if (session) showApp(session);
-    else showAuth();
+
+    try {
+      const me = await api("/me");
+      if (me.user) {
+        setSession(me.user);
+        await loadDataFromApi();
+        showApp(me.user);
+        return;
+      }
+    } catch {
+      /* sessão inválida ou API offline */
+    }
+
+    const cached = getSession();
+    if (cached) setSession(null);
+    showAuth();
   });
 })();

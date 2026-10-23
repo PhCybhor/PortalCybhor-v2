@@ -1,0 +1,241 @@
+{
+  "projects": [
+    {
+      "id": "proj_alfa",
+      "name": "Projeto Alfa",
+      "progress": 72,
+      "owner": "Ana Costa",
+      "status": "progress",
+      "initiativeId": "init_lancamento"
+    },
+    {
+      "id": "proj_beta",
+      "name": "Projeto Beta",
+      "progress": 45,
+      "owner": "Lucas Mendes",
+      "status": "wait",
+      "initiativeId": "init_lancamento"
+    },
+    {
+      "id": "proj_gama",
+      "name": "Projeto Gama",
+      "progress": 100,
+      "owner": "Marina Reis",
+      "status": "done",
+      "initiativeId": null
+    }
+  ],
+  "initiatives": [
+    {
+      "id": "init_lancamento",
+      "name": "Lançamento Portal Cybhor",
+      "description": "Campanha integrada: produto, marketing e engajamento da equipe.",
+      "areas": [
+        "desenvolvimento",
+        "marketing",
+        "produto",
+        "comercial"
+      ],
+      "projectIds": [
+        "proj_alfa",
+        "proj_beta"
+      ],
+      "owner": "Gabriel Silva",
+      "status": "progress"
+    }
+  ],
+  "teams": [
+    {
+      "id": "team_prod",
+      "name": "Squad Produto",
+      "area": "produto",
+      "leadId": "mem_ana"
+    },
+    {
+      "id": "team_eng",
+      "name": "Engenharia",
+      "area": "desenvolvimento",
+      "leadId": "mem_lucas"
+    },
+    {
+      "id": "team_mkt",
+      "name": "Marketing",
+      "area": "marketing",
+      "leadId": "mem_pedro"
+    }
+  ],
+  "members": [
+    {
+      "id": "mem_ana",
+      "name": "Ana Costa",
+      "role": "Product Lead",
+      "teamId": "team_prod"
+    },
+    {
+      "id": "mem_lucas",
+      "name": "Lucas Mendes",
+      "role": "Engenheiro",
+      "teamId": "team_eng"
+    },
+    {
+      "id": "mem_marina",
+      "name": "Marina Reis",
+      "role": "Design",
+      "teamId": "team_prod"
+    },
+    {
+      "id": "mem_pedro",
+      "name": "Pedro Lima",
+      "role": "Marketing",
+      "teamId": "team_mkt"
+    },
+    {
+      "id": "mem_gabriel",
+      "name": "Gabriel Silva",
+      "role": "Admin",
+      "teamId": "team_eng"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task_contrato",
+      "title": "Revisar contrato Hostinger",
+      "column": "todo",
+      "priority": "Alta",
+      "assigneeId": "mem_gabriel",
+      "teamId": "team_eng",
+      "dueDate": "2026-10-23"
+    },
+    {
+      "id": "task_briefing",
+      "title": "Briefing campanha Q4",
+      "column": "todo",
+      "priority": "Média",
+      "assigneeId": "mem_pedro",
+      "teamId": "team_mkt",
+      "dueDate": ""
+    },
+    {
+      "id": "task_api",
+      "title": "API de notificações",
+      "column": "doing",
+      "priority": "Alta",
+      "assigneeId": "mem_lucas",
+      "teamId": "team_eng",
+      "dueDate": "2026-10-23"
+    },
+    {
+      "id": "task_layout",
+      "title": "Layout mobile do portal",
+      "column": "doing",
+      "priority": "Média",
+      "assigneeId": "mem_marina",
+      "teamId": "team_prod",
+      "dueDate": ""
+    },
+    {
+      "id": "task_onb",
+      "title": "Onboarding novos usuários",
+      "column": "done",
+      "priority": "Média",
+      "assigneeId": "mem_ana",
+      "teamId": "team_prod",
+      "dueDate": "2026-10-23",
+      "completedAt": 1792768970438
+    },
+    {
+      "id": "task_logo",
+      "title": "Revisar logo da campanha",
+      "column": "done",
+      "priority": "Baixa",
+      "assigneeId": "mem_pedro",
+      "teamId": "team_mkt",
+      "dueDate": "",
+      "completedAt": 1792599770438
+    }
+  ],
+  "events": [
+    {
+      "id": "ev1",
+      "time": "09:00",
+      "title": "Reunião Geral",
+      "detail": "Sala 2 · Equipe completa"
+    },
+    {
+      "id": "ev2",
+      "time": "11:30",
+      "title": "Feedback 1:1",
+      "detail": "Com Ana Costa"
+    },
+    {
+      "id": "ev3",
+      "time": "14:00",
+      "title": "Planejamento Semanal",
+      "detail": "Squad Produto"
+    }
+  ],
+  "notices": [
+    {
+      "id": "n1",
+      "tone": "blue",
+      "title": "Treinamento de Segurança",
+      "body": "Sexta, 10h · obrigatório para toda a equipe."
+    },
+    {
+      "id": "n2",
+      "tone": "orange",
+      "title": "Feliz aniversário, Mariana!",
+      "body": "Bolo na cozinha às 16h."
+    }
+  ],
+  "finance": [
+    {
+      "id": "f1",
+      "type": "in",
+      "desc": "Cliente Alfa — mensalidade",
+      "amount": 8500,
+      "date": "2026-10-23"
+    },
+    {
+      "id": "f2",
+      "type": "out",
+      "desc": "Hostinger — hospedagem",
+      "amount": 89.9,
+      "date": "2026-10-23"
+    },
+    {
+      "id": "f3",
+      "type": "out",
+      "desc": "Ferramentas SaaS",
+      "amount": 420,
+      "date": "2026-10-23"
+    }
+  ],
+  "ideas": [
+    {
+      "id": "i1",
+      "title": "App mobile do portal",
+      "votes": 5
+    },
+    {
+      "id": "i2",
+      "title": "Integração WhatsApp",
+      "votes": 3
+    }
+  ],
+  "okrs": {
+    "overall": 88,
+    "client": 88,
+    "delivery": 75,
+    "finance": 92
+  },
+  "chatLog": [
+    {
+      "id": "c1",
+      "role": "bot",
+      "at": 1792772570438,
+      "text": "Cybhor v2 — dados no MySQL Hostinger.\\n\\n% de projeto: aba Código (diff).\\nIniciativas ligam áreas e projetos.\\n\\nEx.: Concluí a API de notificações"
+    }
+  ],
+  "commits": []
+}
