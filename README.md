@@ -2,9 +2,9 @@
 
 Portal simples de organização da equipe (HTML/CSS/JS estático).
 
-## Ao vivo
+## Ao vivo (Hostinger)
 
-https://portal.vps10229.panel.icontainer.run/v2/
+https://aqua-alligator-304223.hostingersite.com/
 
 ## Login demo
 
@@ -27,7 +27,3 @@ python3 -m http.server 8766
 ```
 
 Abra http://127.0.0.1:8766
-
-## Hostinger
-
-Conteúdo servido em `/v2/` no domínio do portal.
