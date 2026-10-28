@@ -41,21 +41,25 @@ jobs:
           DEST="${HOSTINGER_USER}@${HOSTINGER_HOST}"
           REMOTE="domains/aqua-alligator-304223.hostingersite.com/public_html"
           RSYNC_SSH="ssh -i ~/.ssh/deploy_key -p ${HOSTINGER_PORT} -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
-          rsync -az \
+          # Espelha o repositório na pasta que o site usa.
+          # config.local.php e .installed ficam no servidor: senha do banco e trava da instalação.
+          rsync -az --delete \
             -e "$RSYNC_SSH" \
             --exclude api/config.local.php \
+            --exclude api/.installed \
             --exclude .git \
             --exclude .github \
             ./ \
             "${DEST}:~/${REMOTE}/"
-          ssh -i ~/.ssh/deploy_key -p "$HOSTINGER_PORT" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
-            "$DEST" "php -l ~/${REMOTE}/api/index.php && php -l ~/${REMOTE}/api/github_summary.php && test -f ~/${REMOTE}/api/config.local.php"
+          printf '%s\n' "$GITHUB_SHA" | ssh -i ~/.ssh/deploy_key -p "$HOSTINGER_PORT" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            "$DEST" "cat > ~/${REMOTE}/REVISION && php -l ~/${REMOTE}/api/index.php && php -l ~/${REMOTE}/api/github_summary.php && test -f ~/${REMOTE}/api/config.local.php && test -f ~/${REMOTE}/api/.installed"
 
       - name: Conferir o site
         run: |
-          html=$(curl -fsS --max-time 20 "https://aqua-alligator-304223.hostingersite.com/")
+          html=$(curl -fsS --max-time 20 "https://aqua-alligator-304223.hostingersite.com/?deploy=$GITHUB_SHA")
           echo "$html" | grep -q "Portal Cybhor v2"
-          echo "Portal no ar."
+          echo "$html" | grep -q "github-link-form"
+          echo "Hospedagem atualizada com o commit $GITHUB_SHA"
 
       - name: Remover chave
         if: always()
