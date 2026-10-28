@@ -91,6 +91,32 @@
   let dragTaskId = null;
   let saveTimer = null;
   let apiReady = false;
+  let currentUser = null;
+  let portalUsers = [];
+
+  const TECH_GITHUB_REQUIRED = ["Dev", "Programação", "DevOps", "ETEC"];
+
+  function isAdmin() {
+    return Boolean(currentUser && (currentUser.is_admin || String(currentUser.role || "").toLowerCase() === "admin"));
+  }
+
+  function myId() {
+    return currentUser ? String(currentUser.id) : "";
+  }
+
+  function roleNeedsGithub(role) {
+    return TECH_GITHUB_REQUIRED.includes(String(role || ""));
+  }
+
+  function usersAsMembers(list) {
+    return (list || []).map((u) => ({
+      id: String(u.id),
+      name: u.name,
+      role: u.role,
+      teamId: null,
+      githubLogin: u.github_login || null,
+    }));
+  }
 
   async function api(path, options = {}) {
     const res = await fetch(API_BASE + path, {
@@ -218,7 +244,10 @@
   function showBoot(msg) {
     const boot = document.getElementById("boot-screen");
     const auth = document.getElementById("auth-screen");
-    if (auth) auth.classList.add("hidden");
+    if (auth) {
+      auth.classList.add("hidden");
+      auth.setAttribute("aria-hidden", "true");
+    }
     if (boot) {
       boot.classList.remove("hidden");
       const label = boot.querySelector("[data-boot-msg]");
@@ -231,22 +260,45 @@
     if (boot) boot.classList.add("hidden");
   }
 
+  function showLogin(msg) {
+    hideBoot();
+    const shell = document.getElementById("app-shell");
+    if (shell) shell.classList.add("hidden");
+    const auth = document.getElementById("auth-screen");
+    if (auth) {
+      auth.classList.remove("hidden");
+      auth.setAttribute("aria-hidden", "false");
+    }
+    const err = document.getElementById("login-error");
+    if (err) err.textContent = msg || "";
+  }
+
+  function applyAdminNav() {
+    document.querySelectorAll("[data-admin-only]").forEach((el) => {
+      el.hidden = !isAdmin();
+    });
+  }
+
   function showApp(user) {
-    const u = user || { id: 0, name: "Equipe Cybhor", role: "Portal", email: "" };
+    currentUser = user || null;
     hideBoot();
     const auth = document.getElementById("auth-screen");
-    if (auth) auth.classList.add("hidden");
+    if (auth) {
+      auth.classList.add("hidden");
+      auth.setAttribute("aria-hidden", "true");
+    }
     const shell = document.getElementById("app-shell");
     if (shell) shell.classList.remove("hidden");
     const nameEl = document.getElementById("user-name");
     const roleEl = document.getElementById("user-role");
-    if (nameEl) nameEl.textContent = u.name || "Equipe Cybhor";
-    if (roleEl) roleEl.textContent = u.role || "Portal";
+    if (nameEl) nameEl.textContent = (user && user.name) || "Equipe Cybhor";
+    if (roleEl) roleEl.textContent = (user && user.role) || "Portal";
     const avatar = document.getElementById("user-avatar");
     if (avatar) {
-      avatar.textContent = initialsFromName(u.name);
+      avatar.textContent = initialsFromName(user && user.name);
       avatar.removeAttribute("src");
     }
+    applyAdminNav();
     try {
       renderAll();
     } catch (err) {
@@ -254,8 +306,40 @@
     }
   }
 
+  async function loadUsers() {
+    try {
+      const res = await api("/users");
+      portalUsers = Array.isArray(res.users) ? res.users.filter((u) => u.is_active !== false) : [];
+      data.members = usersAsMembers(portalUsers);
+    } catch (err) {
+      console.warn("users", err);
+      if (currentUser) {
+        portalUsers = [currentUser];
+        data.members = usersAsMembers(portalUsers);
+      }
+    }
+  }
+
   async function handleLogin(e) {
     if (e) e.preventDefault();
+    const email = (document.getElementById("login-email")?.value || "").trim();
+    const password = document.getElementById("login-password")?.value || "";
+    const err = document.getElementById("login-error");
+    if (err) err.textContent = "";
+    showBoot("Entrando…");
+    try {
+      const res = await api("/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+      currentUser = res.user;
+      setSession(currentUser);
+      await loadDataFromApi();
+      await loadUsers();
+      showApp(currentUser);
+    } catch (ex) {
+      showLogin((ex && ex.message) || "Não foi possível entrar");
+    }
   }
 
   async function handleLogout() {
@@ -265,57 +349,38 @@
       /* ignore */
     }
     apiReady = false;
+    currentUser = null;
     setSession(null);
-    location.reload();
+    showLogin("");
   }
 
-  /**
-   * Sempre abre o app. API é melhor esforço — se falhar, usa dados locais.
-   */
   async function enterPortal() {
     showBoot("Abrindo o portal…");
-    const fallbackUser = {
-      id: 1,
-      name: "Equipe Cybhor",
-      role: "Admin",
-      email: "admin@cybhor.com",
-    };
-    let user = fallbackUser;
-
     try {
       const me = await api("/me");
-      if (me && me.user) user = me.user;
-      else {
-        const res = await api("/enter", { method: "POST", body: "{}" });
-        if (res && res.user) user = res.user;
+      if (me && me.user) {
+        currentUser = me.user;
+        setSession(currentUser);
+        await loadDataFromApi();
+        await loadUsers();
+        showApp(currentUser);
+        return;
       }
     } catch (err) {
-      console.warn("API enter/me indisponível, abrindo offline:", err);
-    }
-
-    setSession(user);
-
-    try {
-      await loadDataFromApi();
-    } catch (err) {
-      console.warn("Estado remoto indisponível, usando dados locais:", err);
-      apiReady = false;
-      try {
-        const cached = localStorage.getItem(STORAGE_KEY);
-        if (cached) data = mergeState(JSON.parse(cached));
-      } catch {
-        /* keep defaultData */
+      if (err && err.status && err.status !== 401) {
+        console.warn("API /me", err);
       }
     }
-
-    showApp(user);
+    setSession(null);
+    showLogin("");
   }
 
   /* ——— Views ——— */
   const VIEW_TITLES = {
     dashboard: "Início",
     foco: "Hoje",
-    equipes: "Pessoas",
+    equipes: "Equipes",
+    admin: "Usuários",
     iniciativas: "Campanhas",
     projetos: "Projetos",
     tarefas: "Tarefas",
@@ -327,6 +392,11 @@
   };
 
   function switchView(name) {
+    const adminViews = new Set(["admin", "equipes", "iniciativas", "financeiro"]);
+    if (adminViews.has(name) && !isAdmin()) {
+      toast("Só o admin acessa esta área");
+      name = "dashboard";
+    }
     document.querySelectorAll(".view").forEach((v) => v.classList.toggle("is-active", v.dataset.view === name));
     document.querySelectorAll(".side-nav button").forEach((b) => {
       b.classList.toggle("is-active", b.dataset.view === name);
@@ -370,6 +440,7 @@
       renderIdeas,
       renderChat,
       renderGithub,
+      renderUsers,
       renderInitiatives,
       renderActivity,
       renderFocus,
@@ -415,17 +486,18 @@
         (data.teams || []).map((tm) => `<option value="${tm.id}">${escapeHtml(tm.name)}</option>`).join("");
       if (cur) team.value = cur;
     }
-    const memTeam = document.getElementById("member-team");
-    if (memTeam) {
-      memTeam.innerHTML = (data.teams || [])
-        .map((tm) => `<option value="${tm.id}">${escapeHtml(tm.name)}</option>`)
-        .join("");
-    }
     const teamLead = document.getElementById("team-lead");
     if (teamLead) {
       teamLead.innerHTML =
         '<option value="">Sem líder</option>' +
         (data.members || []).map((m) => `<option value="${m.id}">${escapeHtml(m.name)}</option>`).join("");
+    }
+    if (!isAdmin()) {
+      const assignee = document.getElementById("task-assignee");
+      if (assignee && currentUser) {
+        assignee.innerHTML = `<option value="${escapeHtml(myId())}">${escapeHtml(currentUser.name)}</option>`;
+        assignee.value = myId();
+      }
     }
     const teamArea = document.getElementById("team-area");
     if (teamArea) {
@@ -720,11 +792,6 @@
       .join("");
   }
 
-  function selectedGithubMember() {
-    const id = document.getElementById("github-member")?.value;
-    return (data.members || []).find((m) => m.id === id) || null;
-  }
-
   function safeGithubUrl(url) {
     try {
       const parsed = new URL(String(url || ""));
@@ -735,42 +802,43 @@
     return "";
   }
 
-  function fillGithubMemberSelect() {
-    const sel = document.getElementById("github-member");
-    if (!sel) return;
-    const current = sel.value;
-    sel.innerHTML = (data.members || [])
-      .map((m) => `<option value="${m.id}">${escapeHtml(m.name)}</option>`)
-      .join("");
-    if (current && data.members.some((m) => m.id === current)) sel.value = current;
-    syncGithubForm();
+  function myGithubLogin() {
+    return (currentUser && currentUser.github_login) || null;
   }
 
   function syncGithubForm() {
-    const member = selectedGithubMember();
     const loginField = document.getElementById("github-login-field");
     const loginInput = document.getElementById("github-login");
     const note = document.getElementById("github-linked-note");
     const submit = document.getElementById("github-submit");
     const unlink = document.getElementById("github-unlink");
-    const linked = Boolean(member && member.githubLogin);
+    const linked = Boolean(myGithubLogin());
     if (loginField) loginField.hidden = linked;
-    if (loginInput) loginInput.required = !linked;
+    if (loginInput) {
+      loginInput.required = !linked;
+      if (!linked && roleNeedsGithub(currentUser && currentUser.role)) {
+        loginInput.placeholder = "@obrigatório para o seu papel";
+      }
+    }
     if (note) {
       note.hidden = !linked;
       note.textContent = linked
-        ? `Vinculado a @${member.githubLogin}. Atualizar só relê o GitHub.`
-        : "";
+        ? `Sua conta: @${myGithubLogin()}. Atualizar só relê o GitHub.`
+        : roleNeedsGithub(currentUser && currentUser.role)
+          ? "No seu papel o GitHub é obrigatório."
+          : "";
     }
     if (submit) submit.textContent = linked ? "Atualizar resumo" : "Vincular GitHub";
-    if (unlink) unlink.hidden = !linked;
-    renderGithubSummary(member);
+    if (unlink) {
+      unlink.hidden = !linked || roleNeedsGithub(currentUser && currentUser.role);
+    }
+    renderGithubSummary();
   }
 
-  function renderGithubSummary(member) {
+  function renderGithubSummary() {
     const box = document.getElementById("github-summary");
     if (!box) return;
-    const report = (data.githubReports || []).find((r) => member && r.memberId === member.id);
+    const report = (data.githubReports || []).find((r) => r.memberId === myId());
     if (!report) {
       box.classList.add("hidden");
       box.innerHTML = "";
@@ -796,15 +864,21 @@
     `;
   }
 
+  function visibleGithubReports() {
+    const reports = Array.isArray(data.githubReports) ? data.githubReports : [];
+    if (isAdmin()) return reports;
+    return reports.filter((r) => r.memberId === myId());
+  }
+
   function renderGithub() {
-    fillGithubMemberSelect();
+    syncGithubForm();
     const box = document.getElementById("github-reports");
     const count = document.getElementById("github-report-count");
-    const reports = Array.isArray(data.githubReports) ? data.githubReports : [];
+    const reports = visibleGithubReports();
     if (count) count.textContent = String(reports.length);
     if (!box) return;
     if (!reports.length) {
-      box.innerHTML = '<div class="list-empty">Nenhum GitHub vinculado ainda.</div>';
+      box.innerHTML = '<div class="list-empty">Nenhum resumo ainda. Vincule o GitHub ao lado.</div>';
       return;
     }
     box.innerHTML = reports
@@ -818,12 +892,12 @@
           minute: "2-digit",
         });
         const commits = r.stats && r.stats.commits ? r.stats.commits : 0;
-        return `<button type="button" class="row-item github-report" data-github-member="${escapeHtml(r.memberId)}" style="width:100%;text-align:left;background:transparent;border:0;border-bottom:1px solid var(--border)">
+        return `<div class="row-item">
           <div>
-            <strong>${escapeHtml(memberName(r.memberId))}</strong>
+            <strong>${escapeHtml(memberName(r.memberId) || "Você")}</strong>
             <div class="meta">@${escapeHtml(r.login)} · ${commits} commit(s) · ${when}</div>
           </div>
-        </button>`;
+        </div>`;
       })
       .join("");
   }
@@ -857,44 +931,40 @@
 
   async function handleGithubLink(e) {
     e.preventDefault();
-    const member = selectedGithubMember();
-    if (!member) {
-      toast("Selecione a pessoa");
+    if (!currentUser) {
+      toast("Faça login");
       return;
     }
-    const linked = Boolean(member.githubLogin);
-    const login = linked ? member.githubLogin : (document.getElementById("github-login")?.value || "").trim();
-    if (!/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/.test(login) || /^\d+$/.test(login)) {
-      toast("Use o usuário do GitHub, não o ID numérico");
-      return;
-    }
+    const linked = Boolean(myGithubLogin());
+    const login = linked ? myGithubLogin() : (document.getElementById("github-login")?.value || "").trim();
     const status = document.getElementById("github-status");
     const submit = document.getElementById("github-submit");
     if (status) status.textContent = "Conferindo no GitHub…";
     if (submit) submit.disabled = true;
     try {
-      const res = await api("/github/summary", {
+      const res = await api("/me/github", {
         method: "POST",
         body: JSON.stringify({ login }),
       });
-      const profile = res.profile || {};
-      member.githubLogin = profile.login || login;
-      member.githubName = profile.name || "";
-      member.githubUrl = safeGithubUrl(profile.html_url) || `https://github.com/${member.githubLogin}`;
-      const summary = res.summary || {};
+      currentUser = res.user || currentUser;
+      setSession(currentUser);
+      await loadUsers();
+      const summaryWrap = res.summary || {};
+      const summary = summaryWrap.summary || {};
+      const profile = summaryWrap.profile || {};
       const report = {
-        memberId: member.id,
-        login: member.githubLogin,
+        memberId: myId(),
+        login: currentUser.github_login || profile.login || login,
         text: summary.text || "",
         bullets: Array.isArray(summary.bullets) ? summary.bullets : [],
-        stats: res.stats || { commits: 0, repos: 0, pulls: 0 },
-        url: member.githubUrl,
+        stats: summaryWrap.stats || { commits: 0, repos: 0, pulls: 0 },
+        url: safeGithubUrl(profile.html_url) || `https://github.com/${currentUser.github_login}`,
         at: Date.now(),
       };
       if (!Array.isArray(data.githubReports)) data.githubReports = [];
-      data.githubReports = data.githubReports.filter((r) => r.memberId !== member.id);
+      data.githubReports = data.githubReports.filter((r) => r.memberId !== myId());
       data.githubReports.unshift(report);
-      const novos = absorbGithubCommits(member.id, res.commits || []);
+      const novos = absorbGithubCommits(myId(), summaryWrap.commits || []);
       const input = document.getElementById("github-login");
       if (input) input.value = "";
       saveData();
@@ -911,21 +981,92 @@
     }
   }
 
-  function unlinkGithub() {
-    const member = selectedGithubMember();
-    if (!member || !member.githubLogin) return;
-    const login = member.githubLogin;
-    if (!confirm(`Desvincular @${login} de ${member.name}?`)) return;
-    delete member.githubLogin;
-    delete member.githubName;
-    delete member.githubUrl;
-    data.githubReports = (data.githubReports || []).filter((r) => r.memberId !== member.id);
-    data.commits = (data.commits || []).filter((c) => !(c.source === "github" && c.authorId === member.id));
-    saveData();
-    renderAll();
-    const input = document.getElementById("github-login");
-    if (input) input.value = "";
-    toast(`GitHub @${login} desvinculado`);
+  async function unlinkGithub() {
+    if (!myGithubLogin()) return;
+    if (roleNeedsGithub(currentUser && currentUser.role)) {
+      toast("No seu papel o GitHub é obrigatório");
+      return;
+    }
+    const login = myGithubLogin();
+    if (!confirm(`Desvincular @${login}?`)) return;
+    try {
+      const res = await api("/me/github", { method: "DELETE" });
+      currentUser = res.user || currentUser;
+      setSession(currentUser);
+      await loadUsers();
+      data.githubReports = (data.githubReports || []).filter((r) => r.memberId !== myId());
+      data.commits = (data.commits || []).filter((c) => !(c.source === "github" && c.authorId === myId()));
+      saveData();
+      renderAll();
+      toast(`GitHub @${login} desvinculado`);
+    } catch (err) {
+      toast((err && err.message) || "Não foi possível desvincular");
+    }
+  }
+
+  function syncUserGithubRequirement() {
+    const role = document.getElementById("user-role")?.value;
+    const field = document.getElementById("user-github-field");
+    const input = document.getElementById("user-github");
+    const need = roleNeedsGithub(role);
+    if (field) field.hidden = false;
+    if (input) input.required = need;
+  }
+
+  function renderUsers() {
+    const box = document.getElementById("users-list");
+    const count = document.getElementById("users-count");
+    if (!box) return;
+    if (!isAdmin()) {
+      box.innerHTML = '<div class="list-empty">Só o admin gerencia contas.</div>';
+      if (count) count.textContent = "0";
+      return;
+    }
+    if (count) count.textContent = String(portalUsers.length);
+    if (!portalUsers.length) {
+      box.innerHTML = '<div class="list-empty">Nenhuma conta ainda.</div>';
+      return;
+    }
+    box.innerHTML = portalUsers
+      .map((u) => {
+        const gh = u.github_login ? `@${u.github_login}` : "sem GitHub";
+        const active = u.is_active === false ? "inativo" : "ativo";
+        return `<div class="row-item">
+          <div>
+            <strong>${escapeHtml(u.name)}</strong>
+            <div class="meta">${escapeHtml(u.email)} · ${escapeHtml(u.role)} · ${escapeHtml(gh)} · ${active}</div>
+          </div>
+          ${
+            String(u.id) === myId()
+              ? '<span class="meta">você</span>'
+              : `<button class="btn btn-sm btn-danger" type="button" data-del-user="${u.id}">Desativar</button>`
+          }
+        </div>`;
+      })
+      .join("");
+  }
+
+  async function handleCreateUser(e) {
+    e.preventDefault();
+    if (!isAdmin()) return;
+    const name = document.getElementById("user-name")?.value.trim();
+    const email = document.getElementById("user-email")?.value.trim();
+    const password = document.getElementById("user-password")?.value || "";
+    const role = document.getElementById("user-role")?.value;
+    const github = document.getElementById("user-github")?.value.trim() || "";
+    try {
+      await api("/users", {
+        method: "POST",
+        body: JSON.stringify({ name, email, password, role, github_login: github }),
+      });
+      await loadUsers();
+      closeModals();
+      e.target.reset();
+      renderAll();
+      toast("Usuário criado");
+    } catch (err) {
+      toast((err && err.message) || "Não foi possível criar");
+    }
   }
 
   function renderChat() {
@@ -960,7 +1101,7 @@
     const text = (input.value || "").trim();
     if (!text) return;
 
-    data.chatLog.push({ id: uid(), role: "user", text, at: Date.now() });
+    data.chatLog.push({ id: uid(), role: "user", text, at: Date.now(), userId: myId() });
     input.value = "";
     renderChat();
 
@@ -1322,12 +1463,13 @@
 
   /* ——— Mutations ——— */
   function addTask(title, column, priority, assigneeId, teamId, dueDate) {
+    const owner = isAdmin() ? assigneeId || myId() : myId();
     data.tasks.unshift({
       id: uid(),
       title,
       column,
       priority,
-      assigneeId: assigneeId || null,
+      assigneeId: owner || null,
       teamId: teamId || null,
       dueDate: dueDate || "",
       createdDone: column === "done",
@@ -1548,8 +1690,14 @@
 
     const githubForm = document.getElementById("github-link-form");
     if (githubForm) githubForm.addEventListener("submit", handleGithubLink);
-    document.getElementById("github-member")?.addEventListener("change", syncGithubForm);
     document.getElementById("github-unlink")?.addEventListener("click", unlinkGithub);
+    document.getElementById("user-role")?.addEventListener("change", syncUserGithubRequirement);
+    on("btn-add-user", "click", () => {
+      if (!isAdmin()) return;
+      syncUserGithubRequirement();
+      openModal("modal-user");
+    });
+    on("form-user", "submit", handleCreateUser);
 
     document.querySelectorAll("[data-chat-example]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -1579,11 +1727,6 @@
       fillTaskSelects();
       openModal("modal-team");
     });
-    on("btn-add-member", "click", () => {
-      fillTaskSelects();
-      openModal("modal-member");
-    });
-
     document.querySelectorAll("[data-close-modal]").forEach((b) => b.addEventListener("click", closeModals));
     document.querySelectorAll(".modal-backdrop").forEach((b) => {
       b.addEventListener("click", (e) => {
@@ -1611,17 +1754,6 @@
         document.getElementById("team-name").value.trim(),
         document.getElementById("team-area").value,
         document.getElementById("team-lead").value
-      );
-      e.target.reset();
-      closeModals();
-    });
-
-    on("form-member", "submit", (e) => {
-      e.preventDefault();
-      addMember(
-        document.getElementById("member-name").value.trim(),
-        document.getElementById("member-role").value.trim(),
-        document.getElementById("member-team").value
       );
       e.target.reset();
       closeModals();
@@ -1703,17 +1835,22 @@
     });
 
     document.body.addEventListener("click", (e) => {
-      const t = e.target.closest("[data-del-task],[data-del-project],[data-del-event],[data-del-notice],[data-del-finance],[data-del-idea],[data-del-initiative],[data-del-team],[data-del-member],[data-complete-task],[data-vote-idea],[data-github-member]");
+      const t = e.target.closest("[data-del-task],[data-del-project],[data-del-event],[data-del-notice],[data-del-finance],[data-del-idea],[data-del-initiative],[data-del-team],[data-del-user],[data-complete-task],[data-vote-idea]");
       if (!t) return;
       if (t.dataset.completeTask) {
         completeTask(t.dataset.completeTask);
         return;
       }
-      if (t.dataset.githubMember) {
-        const sel = document.getElementById("github-member");
-        if (sel) sel.value = t.dataset.githubMember;
-        switchView("desenvolvimento");
-        syncGithubForm();
+      if (t.dataset.delUser) {
+        if (!isAdmin()) return;
+        if (!confirm("Desativar esta conta?")) return;
+        api("/users/" + t.dataset.delUser, { method: "DELETE" })
+          .then(() => loadUsers())
+          .then(() => {
+            renderAll();
+            toast("Conta desativada");
+          })
+          .catch((err) => toast((err && err.message) || "Falha ao desativar"));
         return;
       }
       if (t.dataset.delTask) removeById("tasks", t.dataset.delTask, "Tarefa removida");
@@ -1724,7 +1861,6 @@
       if (t.dataset.delIdea) removeById("ideas", t.dataset.delIdea, "Ideia removida");
       if (t.dataset.delInitiative) removeById("initiatives", t.dataset.delInitiative, "Iniciativa removida");
       if (t.dataset.delTeam) removeById("teams", t.dataset.delTeam, "Equipe removida");
-      if (t.dataset.delMember) removeById("members", t.dataset.delMember, "Membro removido");
       if (t.dataset.voteIdea) {
         const idea = data.ideas.find((i) => i.id === t.dataset.voteIdea);
         if (idea) {
@@ -1781,14 +1917,6 @@
     const savedTheme = localStorage.getItem("cybhor_theme") || "light";
     applyTheme(savedTheme, { charts: false });
 
-    // Abre o portal primeiro — nunca fica preso na tela de boot.
-    try {
-      await enterPortal();
-    } catch (err) {
-      console.error(err);
-      showApp({ id: 1, name: "Equipe Cybhor", role: "Admin", email: "admin@cybhor.com" });
-    }
-
     try {
       wire();
     } catch (err) {
@@ -1796,7 +1924,14 @@
     }
 
     try {
-      buildCharts();
+      await enterPortal();
+    } catch (err) {
+      console.error(err);
+      showLogin("Não foi possível abrir o portal. Tente entrar de novo.");
+    }
+
+    try {
+      if (currentUser) buildCharts();
     } catch (err) {
       console.warn("charts", err);
     }

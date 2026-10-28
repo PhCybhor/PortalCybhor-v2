@@ -8,8 +8,8 @@ return [
     'db_user' => 'u812914256_portal',
     'db_pass' => 'TROQUE_ESTA_SENHA',
     'session_days' => 7,
-    // true = entra no portal sem tela de login (uso interno da equipe)
-    'open_access' => true,
+    // false = exige login. Só use true em emergência.
+    'open_access' => false,
     'admin_email' => 'admin@cybhor.com',
     'admin_password' => 'TROQUE_NO_PRIMEIRO_LOGIN',
     'admin_name' => 'Admin',

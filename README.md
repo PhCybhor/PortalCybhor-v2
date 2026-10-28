@@ -8,10 +8,9 @@ https://aqua-alligator-304223.hostingersite.com/
 
 ## Login
 
-- E-mail: `admin@cybhor.com`
-- Senha: `cybhor123`
+O admin cria as contas em **Usuários**. Em Dev, Programação, DevOps e ETEC o GitHub (@ ou e-mail noreply) é obrigatório.
 
-Sessão com cookie `HttpOnly` · dados no MySQL (`u812914256_portal`).
+Sessão com cookie `HttpOnly` · dados no MySQL. Cada usuário só vê a própria área; o admin vê tudo.
 
 ## Arquitetura
 

@@ -6,19 +6,19 @@
   <meta name="description" content="Portal Cybhor v2 — iniciativas, projetos, commits e operação da equipe.">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <title>Portal Cybhor v2</title>
-  <link rel="stylesheet" href="assets/css/theme.css?v=20261028a">
-  <link rel="stylesheet" href="assets/css/base.css?v=20261028a">
+  <link rel="stylesheet" href="assets/css/theme.css?v=20261028b">
+  <link rel="stylesheet" href="assets/css/base.css?v=20261028b">
   <style>
-    /* fallback crítico se CSS remoto atrasar */
     .boot-screen{min-height:100vh;display:grid;place-items:center;background:#f3f4f6;margin:0}
     .boot-card{width:min(320px,92vw);background:#fff;border:1px solid #d7dbe3;border-radius:6px;padding:28px 24px;font-family:Segoe UI,system-ui,sans-serif}
     .boot-card p{margin:14px 0 0;color:#5c6570}
-    .app-shell.hidden,#auth-screen{display:none!important}
+    .app-shell.hidden{display:none!important}
+    .boot-screen.hidden{display:none!important}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
-  <script src="assets/js/progress-chat.js?v=20261028a" defer></script>
-  <script src="assets/js/team-ops.js?v=20261028a" defer></script>
-  <script src="assets/js/app.js?v=20261028a" defer></script>
+  <script src="assets/js/progress-chat.js?v=20261028b" defer></script>
+  <script src="assets/js/team-ops.js?v=20261028b" defer></script>
+  <script src="assets/js/app.js?v=20261028b" defer></script>
 </head>
 <body>
 
@@ -36,7 +36,27 @@
   </div>
 
   <div id="auth-screen" class="auth-screen hidden" aria-hidden="true">
-    <form id="login-form" class="auth-card hidden" autocomplete="on"></form>
+    <form id="login-form" class="auth-card" autocomplete="on">
+      <div class="brand-row" style="margin-bottom:18px">
+        <span class="brand-mark" aria-hidden="true">C</span>
+        <div class="brand-text">
+          <strong>CYBHOR</strong>
+          <span>Portal</span>
+        </div>
+      </div>
+      <h2 class="auth-title">Entrar</h2>
+      <p class="meta" style="margin:0 0 14px">Use o e-mail e a senha criados pelo admin.</p>
+      <div class="field">
+        <label for="login-email">E-mail</label>
+        <input class="input" id="login-email" type="email" required autocomplete="username" placeholder="voce@cybhor.com">
+      </div>
+      <div class="field">
+        <label for="login-password">Senha</label>
+        <input class="input" id="login-password" type="password" required autocomplete="current-password" minlength="8">
+      </div>
+      <p class="meta" id="login-error" role="alert" style="color:var(--danger);min-height:1.2em"></p>
+      <button class="btn btn-primary btn-block" type="submit">Entrar</button>
+    </form>
   </div>
 
   <div id="sidebar-backdrop" class="sidebar-backdrop" hidden></div>
@@ -54,18 +74,20 @@
         <button type="button" class="is-active" data-view="dashboard">Início</button>
         <button type="button" data-view="foco">Hoje</button>
         <button type="button" data-view="tarefas">Tarefas</button>
-        <button type="button" data-view="equipes">Pessoas</button>
         <button type="button" data-view="projetos">Projetos</button>
         <button type="button" data-view="desenvolvimento">GitHub</button>
+        <button type="button" data-view="admin" data-admin-only hidden>Usuários</button>
         <div class="side-label">Mais</div>
-        <button type="button" data-view="iniciativas">Campanhas</button>
+        <button type="button" data-view="equipes" data-admin-only hidden>Equipes</button>
+        <button type="button" data-view="iniciativas" data-admin-only hidden>Campanhas</button>
         <button type="button" data-view="assistente">Chat</button>
-        <button type="button" data-view="financeiro">Dinheiro</button>
+        <button type="button" data-view="financeiro" data-admin-only hidden>Dinheiro</button>
         <button type="button" data-view="ideias">Ideias</button>
         <button type="button" data-view="atividade">Histórico</button>
       </nav>
       <div class="side-foot">
-        <button class="btn btn-sm side-foot-btn" type="button" id="btn-export">Salvar cópia</button>
+        <button class="btn btn-sm side-foot-btn" type="button" id="btn-logout">Sair</button>
+        <button class="btn btn-sm side-foot-btn" type="button" id="btn-export" data-admin-only hidden>Salvar cópia</button>
       </div>
     </aside>
 
@@ -100,20 +122,20 @@
           <p class="simple-lead">Comece por aqui. O restante fica no menu lateral.</p>
 
           <div class="simple-steps">
-            <button type="button" class="simple-step" data-go="equipes">
-              <span class="simple-num">1</span>
-              <strong>Pessoas</strong>
-              <span>Quem trabalha em cada time</span>
-            </button>
             <button type="button" class="simple-step" data-go="tarefas">
-              <span class="simple-num">2</span>
+              <span class="simple-num">1</span>
               <strong>Tarefas</strong>
               <span>O que fazer · arraste para Concluído</span>
             </button>
             <button type="button" class="simple-step" data-go="foco">
-              <span class="simple-num">3</span>
+              <span class="simple-num">2</span>
               <strong>Hoje</strong>
               <span>Lista do que fazer agora</span>
+            </button>
+            <button type="button" class="simple-step" data-go="desenvolvimento">
+              <span class="simple-num">3</span>
+              <strong>GitHub</strong>
+              <span>Vincule sua conta e veja o resumo</span>
             </button>
           </div>
 
@@ -128,7 +150,6 @@
             <section class="panel">
               <div class="panel-head">
                 <h2>Ranking da semana</h2>
-                <button class="btn btn-sm" type="button" data-go="equipes">Ver pessoas</button>
               </div>
               <div id="workload-list"></div>
             </section>
@@ -173,14 +194,13 @@
           </section>
         </section>
 
-        <!-- PESSOAS -->
+        <!-- EQUIPES (admin) -->
         <section class="view" data-view="equipes">
           <div class="page-head">
             <div>
-              <p class="lead" style="margin:0">Times e pessoas. Quem entrega mais, pontua mais — horas não contam.</p>
+              <p class="lead" style="margin:0">Times da operação. Usuários de login ficam em <strong>Usuários</strong>.</p>
             </div>
             <div class="actions">
-              <button class="btn" type="button" id="btn-add-member">+ Pessoa</button>
               <button class="btn btn-primary" type="button" id="btn-add-team">+ Time</button>
             </div>
           </div>
@@ -190,10 +210,9 @@
               <div id="teams-list" class="initiatives-grid"></div>
             </div>
             <section class="panel">
-              <div class="panel-head"><h2>Pessoas</h2></div>
-              <div id="members-list"></div>
-              <div class="panel-head" style="margin-top:18px"><h2>Ranking (pontos dos últimos 7 dias)</h2></div>
+              <div class="panel-head"><h2>Ranking (pontos dos últimos 7 dias)</h2></div>
               <div id="workload-list-dup"></div>
+              <div id="members-list" class="hidden" aria-hidden="true"></div>
               <div class="points-rules">
                 <strong>Como pontua</strong>
                 <ul>
@@ -205,6 +224,20 @@
               </div>
             </section>
           </div>
+        </section>
+
+        <!-- ADMIN USUÁRIOS -->
+        <section class="view" data-view="admin">
+          <div class="page-head">
+            <div>
+              <p class="lead" style="margin:0">Só o admin cria contas. Em Dev, Programação, DevOps e ETEC o GitHub é obrigatório.</p>
+            </div>
+            <button class="btn btn-primary" type="button" id="btn-add-user">+ Usuário</button>
+          </div>
+          <section class="panel">
+            <div class="panel-head"><h2>Contas</h2><span class="meta" id="users-count">0</span></div>
+            <div id="users-list"></div>
+          </section>
         </section>
 
         <!-- INICIATIVAS -->
@@ -261,18 +294,14 @@
         <!-- GITHUB -->
         <section class="view" data-view="desenvolvimento">
           <div class="page-head">
-            <div><p class="lead" style="margin:0">Vincule o GitHub. O portal confere a conta e escreve o resumo — a pessoa não preenche relatório nem cola commit.</p></div>
+            <div><p class="lead" style="margin:0">Vincule o seu GitHub. O portal confere a conta e escreve o resumo — você não preenche relatório.</p></div>
           </div>
           <div class="chat-layout">
             <section class="panel">
               <form id="github-link-form">
-                <div class="field">
-                  <label for="github-member">Pessoa</label>
-                  <select class="select" id="github-member" required></select>
-                </div>
                 <div class="field" id="github-login-field">
-                  <label for="github-login">Usuário do GitHub</label>
-                  <input class="input" id="github-login" name="github-login" maxlength="39" autocomplete="off" spellcheck="false" placeholder="usuario" inputmode="text">
+                  <label for="github-login">@ ou e-mail do GitHub</label>
+                  <input class="input" id="github-login" name="github-login" maxlength="80" autocomplete="off" spellcheck="false" placeholder="@seuusuario ou …@users.noreply.github.com" inputmode="text">
                 </div>
                 <p class="meta" id="github-linked-note" hidden></p>
                 <div class="actions">
@@ -423,19 +452,30 @@
     </form>
   </div>
 
-  <div id="modal-member" class="modal-backdrop hidden">
-    <form id="form-member" class="modal">
-      <h3>Novo membro</h3>
-      <div class="field"><label for="member-name">Nome</label><input class="input" id="member-name" required></div>
-      <div class="field"><label for="member-role">Papel</label><input class="input" id="member-role" required placeholder="Engenheiro"></div>
+  <div id="modal-user" class="modal-backdrop hidden">
+    <form id="form-user" class="modal">
+      <h3>Novo usuário</h3>
+      <div class="field"><label for="user-name">Nome</label><input class="input" id="user-name" required maxlength="120"></div>
+      <div class="field"><label for="user-email">E-mail de login</label><input class="input" id="user-email" type="email" required autocomplete="off"></div>
+      <div class="field"><label for="user-password">Senha inicial</label><input class="input" id="user-password" type="password" required minlength="8" autocomplete="new-password"></div>
       <div class="field">
-        <label for="member-team">Equipe</label>
-        <select class="select" id="member-team"></select>
+        <label for="user-role">Papel</label>
+        <select class="select" id="user-role" required>
+          <option value="Dev">Dev</option>
+          <option value="Programação">Programação</option>
+          <option value="DevOps">DevOps</option>
+          <option value="ETEC">ETEC</option>
+          <option value="Admin">Admin</option>
+        </select>
       </div>
-
+      <div class="field" id="user-github-field">
+        <label for="user-github">GitHub (@ ou e-mail noreply)</label>
+        <input class="input" id="user-github" maxlength="80" placeholder="@usuario" autocomplete="off">
+        <p class="meta" id="user-github-hint" style="margin:6px 0 0">Obrigatório para Dev, Programação, DevOps e ETEC.</p>
+      </div>
       <div class="modal-actions">
         <button class="btn" type="button" data-close-modal>Cancelar</button>
-        <button class="btn btn-primary" type="submit">Adicionar</button>
+        <button class="btn btn-primary" type="submit">Criar conta</button>
       </div>
     </form>
   </div>
