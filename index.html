@@ -6,8 +6,8 @@
   <meta name="description" content="Portal Cybhor v2 — iniciativas, projetos, commits e operação da equipe.">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <title>Portal Cybhor v2</title>
-  <link rel="stylesheet" href="assets/css/theme.css?v=20261028c">
-  <link rel="stylesheet" href="assets/css/base.css?v=20261028c">
+  <link rel="stylesheet" href="assets/css/theme.css?v=20261028d">
+  <link rel="stylesheet" href="assets/css/base.css?v=20261028d">
   <style>
     .boot-screen{min-height:100vh;display:grid;place-items:center;background:#e4e6ea;margin:0}
     .boot-card{width:min(340px,92vw);background:#f7f8f9;border:1px solid #c9ced6;border-radius:6px;padding:32px 28px;font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif}
@@ -16,9 +16,9 @@
     .boot-screen.hidden{display:none!important}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
-  <script src="assets/js/progress-chat.js?v=20261028c" defer></script>
-  <script src="assets/js/team-ops.js?v=20261028c" defer></script>
-  <script src="assets/js/app.js?v=20261028c" defer></script>
+  <script src="assets/js/progress-chat.js?v=20261028d" defer></script>
+  <script src="assets/js/team-ops.js?v=20261028d" defer></script>
+  <script src="assets/js/app.js?v=20261028d" defer></script>
 </head>
 <body>
 
@@ -245,7 +245,7 @@
         <section class="view" data-view="admin">
           <div class="page-head">
             <div>
-              <p class="lead" style="margin:0">Só o admin cria contas. Em Dev, Programação, DevOps e ETEC o GitHub é obrigatório.</p>
+              <p class="lead" style="margin:0">Só o admin cria contas. GitHub é obrigatório em Dev, Programação, DevOps e ETEC.</p>
             </div>
             <button class="btn btn-primary" type="button" id="btn-add-user">+ Usuário</button>
           </div>
@@ -474,19 +474,27 @@
       <div class="field"><label for="user-email">E-mail de login</label><input class="input" id="user-email" type="email" required autocomplete="off"></div>
       <div class="field"><label for="user-password">Senha inicial</label><input class="input" id="user-password" type="password" required minlength="8" autocomplete="new-password"></div>
       <div class="field">
-        <label for="user-role">Papel</label>
-        <select class="select" id="user-role" required>
+        <label for="new-user-role">Papel</label>
+        <select class="select" id="new-user-role" required>
           <option value="Dev">Dev</option>
           <option value="Programação">Programação</option>
           <option value="DevOps">DevOps</option>
           <option value="ETEC">ETEC</option>
+          <option value="Produto">Produto</option>
+          <option value="Design">Design</option>
+          <option value="Marketing">Marketing</option>
+          <option value="Comercial">Comercial</option>
+          <option value="Financeiro">Financeiro</option>
+          <option value="RH">RH</option>
+          <option value="Operações">Operações</option>
+          <option value="Suporte">Suporte</option>
           <option value="Admin">Admin</option>
         </select>
       </div>
       <div class="field" id="user-github-field">
         <label for="user-github">GitHub (@ ou e-mail noreply)</label>
         <input class="input" id="user-github" maxlength="80" placeholder="@usuario" autocomplete="off">
-        <p class="meta" id="user-github-hint" style="margin:6px 0 0">Obrigatório para Dev, Programação, DevOps e ETEC.</p>
+        <p class="meta" id="user-github-hint" style="margin:6px 0 0">Obrigatório só para Dev, Programação, DevOps e ETEC.</p>
       </div>
       <div class="modal-actions">
         <button class="btn" type="button" data-close-modal>Cancelar</button>

@@ -94,7 +94,22 @@
   let currentUser = null;
   let portalUsers = [];
 
-  const TECH_GITHUB_REQUIRED = ["Dev", "Programação", "DevOps", "ETEC"];
+  const PORTAL_ROLES = [
+    "Dev",
+    "Programação",
+    "DevOps",
+    "ETEC",
+    "Produto",
+    "Design",
+    "Marketing",
+    "Comercial",
+    "Financeiro",
+    "RH",
+    "Operações",
+    "Suporte",
+    "Admin",
+  ];
+  let TECH_GITHUB_REQUIRED = ["Dev", "Programação", "DevOps", "ETEC"];
 
   function isAdmin() {
     return Boolean(currentUser && (currentUser.is_admin || String(currentUser.role || "").toLowerCase() === "admin"));
@@ -106,6 +121,26 @@
 
   function roleNeedsGithub(role) {
     return TECH_GITHUB_REQUIRED.includes(String(role || ""));
+  }
+
+  function applyRolesMeta(meta) {
+    if (meta && Array.isArray(meta.github_required_roles) && meta.github_required_roles.length) {
+      TECH_GITHUB_REQUIRED = meta.github_required_roles.map(String);
+    }
+    fillUserRoleSelect(meta && meta.roles);
+  }
+
+  function fillUserRoleSelect(roles) {
+    const sel = document.getElementById("new-user-role");
+    if (!sel) return;
+    const list = Array.isArray(roles) && roles.length ? roles : PORTAL_ROLES;
+    const current = sel.value;
+    sel.innerHTML = list
+      .map((r) => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`)
+      .join("");
+    if (current && list.includes(current)) sel.value = current;
+    else if (list.includes("Dev")) sel.value = "Dev";
+    syncUserGithubRequirement();
   }
 
   function usersAsMembers(list) {
@@ -334,6 +369,12 @@
       });
       currentUser = res.user;
       setSession(currentUser);
+      try {
+        const me = await api("/me");
+        applyRolesMeta(me);
+      } catch {
+        fillUserRoleSelect();
+      }
       await loadDataFromApi();
       await loadUsers();
       showApp(currentUser);
@@ -358,6 +399,7 @@
     showBoot("Abrindo o portal…");
     try {
       const me = await api("/me");
+      applyRolesMeta(me);
       if (me && me.user) {
         currentUser = me.user;
         setSession(currentUser);
@@ -367,6 +409,7 @@
         return;
       }
     } catch (err) {
+      fillUserRoleSelect();
       if (err && err.status && err.status !== 401) {
         console.warn("API /me", err);
       }
@@ -1005,12 +1048,18 @@
   }
 
   function syncUserGithubRequirement() {
-    const role = document.getElementById("user-role")?.value;
+    const role = document.getElementById("new-user-role")?.value;
     const field = document.getElementById("user-github-field");
     const input = document.getElementById("user-github");
+    const hint = document.getElementById("user-github-hint");
     const need = roleNeedsGithub(role);
     if (field) field.hidden = false;
     if (input) input.required = need;
+    if (hint) {
+      hint.textContent = need
+        ? "Obrigatório para este papel (Dev / Programação / DevOps / ETEC)."
+        : "Opcional neste papel — pode deixar em branco.";
+    }
   }
 
   function renderUsers() {
@@ -1052,7 +1101,7 @@
     const name = document.getElementById("user-name")?.value.trim();
     const email = document.getElementById("user-email")?.value.trim();
     const password = document.getElementById("user-password")?.value || "";
-    const role = document.getElementById("user-role")?.value;
+    const role = document.getElementById("new-user-role")?.value;
     const github = document.getElementById("user-github")?.value.trim() || "";
     try {
       await api("/users", {
@@ -1691,9 +1740,10 @@
     const githubForm = document.getElementById("github-link-form");
     if (githubForm) githubForm.addEventListener("submit", handleGithubLink);
     document.getElementById("github-unlink")?.addEventListener("click", unlinkGithub);
-    document.getElementById("user-role")?.addEventListener("change", syncUserGithubRequirement);
+    document.getElementById("new-user-role")?.addEventListener("change", syncUserGithubRequirement);
     on("btn-add-user", "click", () => {
       if (!isAdmin()) return;
+      fillUserRoleSelect();
       syncUserGithubRequirement();
       openModal("modal-user");
     });

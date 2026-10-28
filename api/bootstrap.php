@@ -24,8 +24,25 @@ if (!is_file($configFile)) {
 /** @var array{db_host:string,db_name:string,db_user:string,db_pass:string,db_port?:int,session_days?:int,open_access?:bool} $CONFIG */
 $CONFIG = require $configFile;
 
-/** Papéis do portal. Admin vê tudo; os demais só a própria área. */
-const TECH_ROLES = ['Admin', 'Dev', 'Programação', 'DevOps', 'ETEC'];
+/**
+ * Papéis do portal (login / contas).
+ * Admin vê tudo; os demais só a própria visão filtrada.
+ */
+const TECH_ROLES = [
+    'Dev',
+    'Programação',
+    'DevOps',
+    'ETEC',
+    'Produto',
+    'Design',
+    'Marketing',
+    'Comercial',
+    'Financeiro',
+    'RH',
+    'Operações',
+    'Suporte',
+    'Admin',
+];
 
 /** Papéis de tecnologia: GitHub (@ ou e-mail noreply) é obrigatório. */
 const TECH_GITHUB_REQUIRED = ['Dev', 'Programação', 'DevOps', 'ETEC'];
