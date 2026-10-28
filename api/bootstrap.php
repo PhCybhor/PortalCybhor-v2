@@ -139,3 +139,33 @@ function require_user(): array
     }
     return $user;
 }
+
+/**
+ * Cria cookie de sessão para um usuário já validado.
+ *
+ * @param array{id:int|string,email:string,name:string,role:string} $row
+ * @return array{id:int,email:string,name:string,role:string}
+ */
+function issue_session_for_user(array $row): array
+{
+    global $CONFIG;
+    $days = max(1, (int)($CONFIG['session_days'] ?? 7));
+    $token = bin2hex(random_bytes(32));
+    $meta = client_meta();
+    $expires = (new DateTimeImmutable('now', new DateTimeZone('UTC')))
+        ->modify("+{$days} days")
+        ->format('Y-m-d H:i:s');
+
+    db()->prepare(
+        'INSERT INTO auth_sessions (id, user_id, expires_at, ip_hash, user_agent_hash) VALUES (?, ?, ?, ?, ?)'
+    )->execute([$token, (int)$row['id'], $expires, $meta['ip_hash'], $meta['ua_hash']]);
+
+    set_session_cookie($token, $days);
+
+    return [
+        'id' => (int)$row['id'],
+        'email' => (string)$row['email'],
+        'name' => (string)$row['name'],
+        'role' => (string)$row['role'],
+    ];
+}

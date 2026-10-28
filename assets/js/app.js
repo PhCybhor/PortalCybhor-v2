@@ -78,11 +78,12 @@
       {
         id: uid(),
         role: "bot",
-        text: "Cybhor v2 — manda updates de tarefas aqui.\n\n% de projeto: só na aba Desenvolvimento (diff do commit).\nIniciativas: ligam áreas e projetos.\n\nEx.: Concluí a API de notificações",
+        text: "Cybhor v2 — manda updates de tarefas aqui.\n\nResumo de código: menu GitHub, só vinculando a conta. A pessoa não escreve o relatório.\n\nEx.: Concluí a API de notificações",
         at: Date.now(),
       },
     ],
     commits: [],
+    githubReports: [],
   });
 
   let data = defaultData();
@@ -132,6 +133,7 @@
       ...parsed,
       chatLog: Array.isArray(parsed.chatLog) && parsed.chatLog.length ? parsed.chatLog : base.chatLog,
       commits: Array.isArray(parsed.commits) ? parsed.commits : [],
+      githubReports: Array.isArray(parsed.githubReports) ? parsed.githubReports : [],
       teams: Array.isArray(parsed.teams) ? parsed.teams : base.teams,
       members: Array.isArray(parsed.members) ? parsed.members : base.members,
       initiatives: Array.isArray(parsed.initiatives) ? parsed.initiatives : base.initiatives,
@@ -202,40 +204,58 @@
     return { progress: "badge-progress", wait: "badge-wait", done: "badge-done" }[s] || "badge-progress";
   }
 
-  /* ——— Auth ——— */
-  function showApp(user) {
-    document.getElementById("auth-screen").classList.add("hidden");
-    document.getElementById("app-shell").classList.remove("hidden");
-    document.getElementById("user-name").textContent = user.name;
-    document.getElementById("user-role").textContent = user.role + " · Organização";
-    renderAll();
+  /* ——— Auth / entrada direta ——— */
+  function initialsFromName(name) {
+    const parts = String(name || "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    if (!parts.length) return "CY";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
 
-  function showAuth() {
-    document.getElementById("auth-screen").classList.remove("hidden");
-    document.getElementById("app-shell").classList.add("hidden");
+  function showBoot(msg) {
+    const boot = document.getElementById("boot-screen");
+    const auth = document.getElementById("auth-screen");
+    if (auth) auth.classList.add("hidden");
+    if (boot) {
+      boot.classList.remove("hidden");
+      const label = boot.querySelector("[data-boot-msg]");
+      if (label && msg) label.textContent = msg;
+    }
+  }
+
+  function hideBoot() {
+    const boot = document.getElementById("boot-screen");
+    if (boot) boot.classList.add("hidden");
+  }
+
+  function showApp(user) {
+    const u = user || { id: 0, name: "Equipe Cybhor", role: "Portal", email: "" };
+    hideBoot();
+    const auth = document.getElementById("auth-screen");
+    if (auth) auth.classList.add("hidden");
+    const shell = document.getElementById("app-shell");
+    if (shell) shell.classList.remove("hidden");
+    const nameEl = document.getElementById("user-name");
+    const roleEl = document.getElementById("user-role");
+    if (nameEl) nameEl.textContent = u.name || "Equipe Cybhor";
+    if (roleEl) roleEl.textContent = u.role || "Portal";
+    const avatar = document.getElementById("user-avatar");
+    if (avatar) {
+      avatar.textContent = initialsFromName(u.name);
+      avatar.removeAttribute("src");
+    }
+    try {
+      renderAll();
+    } catch (err) {
+      console.error("renderAll", err);
+    }
   }
 
   async function handleLogin(e) {
-    e.preventDefault();
-    const email = document.getElementById("login-email").value.trim().toLowerCase();
-    const password = document.getElementById("login-password").value;
-    const err = document.getElementById("auth-error");
-    err.classList.add("hidden");
-
-    try {
-      const res = await api("/login", {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-      });
-      setSession(res.user);
-      await loadDataFromApi();
-      showApp(res.user);
-      toast("Bem-vindo ao Portal Cybhor v2");
-    } catch (ex) {
-      err.textContent = (ex && ex.payload && ex.payload.error) || "E-mail ou senha incorretos.";
-      err.classList.remove("hidden");
-    }
+    if (e) e.preventDefault();
   }
 
   async function handleLogout() {
@@ -246,8 +266,49 @@
     }
     apiReady = false;
     setSession(null);
-    showAuth();
-    toast("Sessão encerrada");
+    location.reload();
+  }
+
+  /**
+   * Sempre abre o app. API é melhor esforço — se falhar, usa dados locais.
+   */
+  async function enterPortal() {
+    showBoot("Abrindo o portal…");
+    const fallbackUser = {
+      id: 1,
+      name: "Equipe Cybhor",
+      role: "Admin",
+      email: "admin@cybhor.com",
+    };
+    let user = fallbackUser;
+
+    try {
+      const me = await api("/me");
+      if (me && me.user) user = me.user;
+      else {
+        const res = await api("/enter", { method: "POST", body: "{}" });
+        if (res && res.user) user = res.user;
+      }
+    } catch (err) {
+      console.warn("API enter/me indisponível, abrindo offline:", err);
+    }
+
+    setSession(user);
+
+    try {
+      await loadDataFromApi();
+    } catch (err) {
+      console.warn("Estado remoto indisponível, usando dados locais:", err);
+      apiReady = false;
+      try {
+        const cached = localStorage.getItem(STORAGE_KEY);
+        if (cached) data = mergeState(JSON.parse(cached));
+      } catch {
+        /* keep defaultData */
+      }
+    }
+
+    showApp(user);
   }
 
   /* ——— Views ——— */
@@ -258,7 +319,7 @@
     iniciativas: "Campanhas",
     projetos: "Projetos",
     tarefas: "Tarefas",
-    desenvolvimento: "Código",
+    desenvolvimento: "GitHub",
     assistente: "Chat",
     financeiro: "Dinheiro",
     ideias: "Ideias",
@@ -298,25 +359,33 @@
 
   /* ——— Render ——— */
   function renderAll() {
-    renderKpis();
-    renderOkrs();
-    renderEvents();
-    renderProjects();
-    renderKanban();
-    renderNotices();
-    renderFinance();
-    renderIdeas();
-    renderChat();
-    renderCommits();
-    renderInitiatives();
-    renderActivity();
-    renderFocus();
-    renderTeams();
-    renderWorkload();
-    fillCommitProjectSelect();
-    fillInitiativeSelects();
-    fillTaskSelects();
-    buildCharts();
+    const steps = [
+      renderKpis,
+      renderOkrs,
+      renderEvents,
+      renderProjects,
+      renderKanban,
+      renderNotices,
+      renderFinance,
+      renderIdeas,
+      renderChat,
+      renderGithub,
+      renderInitiatives,
+      renderActivity,
+      renderFocus,
+      renderTeams,
+      renderWorkload,
+      fillInitiativeSelects,
+      fillTaskSelects,
+      buildCharts,
+    ];
+    steps.forEach((fn) => {
+      try {
+        fn();
+      } catch (err) {
+        console.warn(fn.name || "render", err);
+      }
+    });
   }
 
   function memberName(id) {
@@ -357,14 +426,6 @@
       teamLead.innerHTML =
         '<option value="">Sem líder</option>' +
         (data.members || []).map((m) => `<option value="${m.id}">${escapeHtml(m.name)}</option>`).join("");
-    }
-    const commitAuthor = document.getElementById("commit-author");
-    if (commitAuthor) {
-      const cur = commitAuthor.value || "mem_gabriel";
-      commitAuthor.innerHTML = (data.members || [])
-        .map((m) => `<option value="${m.id}">${escapeHtml(m.name)}</option>`)
-        .join("");
-      if (data.members.some((m) => m.id === cur)) commitAuthor.value = cur;
     }
     const teamArea = document.getElementById("team-area");
     if (teamArea) {
@@ -485,7 +546,7 @@
             (m) => `<div class="row-item">
               <div>
                 <strong>${escapeHtml(m.name)}</strong>
-                <div class="meta">${escapeHtml(m.role)} · ${escapeHtml(teamName(m.teamId))}</div>
+                <div class="meta">${escapeHtml(m.role)} · ${escapeHtml(teamName(m.teamId))}${m.githubLogin ? ` · GitHub @${escapeHtml(m.githubLogin)}` : ""}</div>
               </div>
               <button class="btn btn-sm btn-danger" type="button" data-del-member="${m.id}">Excluir</button>
             </div>`
@@ -498,9 +559,17 @@
   function buildActivityFeed() {
     const items = [];
     (data.commits || []).forEach((c) => {
+      if (c.source === "github") return;
       items.push({
         at: c.at,
         text: `Commit em ${c.projectName}: ${c.message} (+${c.delta}%)`,
+      });
+    });
+    (data.githubReports || []).forEach((r) => {
+      const commits = r.stats && r.stats.commits ? r.stats.commits : 0;
+      items.push({
+        at: r.at,
+        text: `Resumo GitHub de ${memberName(r.memberId)} (@${r.login}): ${commits} commit(s) público(s)`,
       });
     });
     (data.chatLog || [])
@@ -651,153 +720,213 @@
       .join("");
   }
 
-  function fillCommitProjectSelect() {
-    const sel = document.getElementById("commit-project");
-    if (!sel) return;
-    const current = sel.value;
-    sel.innerHTML = data.projects
-      .map(
-        (p) =>
-          `<option value="${p.id}">${escapeHtml(p.name)} — ${p.progress}%</option>`
-      )
-      .join("");
-    if (current && data.projects.some((p) => p.id === current)) sel.value = current;
+  function selectedGithubMember() {
+    const id = document.getElementById("github-member")?.value;
+    return (data.members || []).find((m) => m.id === id) || null;
   }
 
-  function renderCommits() {
-    const box = document.getElementById("commits-list");
-    const count = document.getElementById("commit-count");
+  function safeGithubUrl(url) {
+    try {
+      const parsed = new URL(String(url || ""));
+      if (parsed.protocol === "https:" && parsed.hostname === "github.com") return parsed.href;
+    } catch {
+      /* URL inválida */
+    }
+    return "";
+  }
+
+  function fillGithubMemberSelect() {
+    const sel = document.getElementById("github-member");
+    if (!sel) return;
+    const current = sel.value;
+    sel.innerHTML = (data.members || [])
+      .map((m) => `<option value="${m.id}">${escapeHtml(m.name)}</option>`)
+      .join("");
+    if (current && data.members.some((m) => m.id === current)) sel.value = current;
+    syncGithubForm();
+  }
+
+  function syncGithubForm() {
+    const member = selectedGithubMember();
+    const loginField = document.getElementById("github-login-field");
+    const loginInput = document.getElementById("github-login");
+    const note = document.getElementById("github-linked-note");
+    const submit = document.getElementById("github-submit");
+    const unlink = document.getElementById("github-unlink");
+    const linked = Boolean(member && member.githubLogin);
+    if (loginField) loginField.hidden = linked;
+    if (loginInput) loginInput.required = !linked;
+    if (note) {
+      note.hidden = !linked;
+      note.textContent = linked
+        ? `Vinculado a @${member.githubLogin}. Atualizar só relê o GitHub.`
+        : "";
+    }
+    if (submit) submit.textContent = linked ? "Atualizar resumo" : "Vincular GitHub";
+    if (unlink) unlink.hidden = !linked;
+    renderGithubSummary(member);
+  }
+
+  function renderGithubSummary(member) {
+    const box = document.getElementById("github-summary");
     if (!box) return;
-    if (!Array.isArray(data.commits)) data.commits = [];
-    if (count) count.textContent = String(data.commits.length);
-    if (!data.commits.length) {
-      box.innerHTML = '<div class="list-empty">Nenhum commit analisado ainda.</div>';
+    const report = (data.githubReports || []).find((r) => member && r.memberId === member.id);
+    if (!report) {
+      box.classList.add("hidden");
+      box.innerHTML = "";
       return;
     }
-    box.innerHTML = data.commits
-      .slice(0, 20)
-      .map((c) => {
-        const when = new Date(c.at).toLocaleString("pt-BR", {
+    const when = new Date(report.at).toLocaleString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    const url = safeGithubUrl(report.url);
+    box.classList.remove("hidden");
+    box.innerHTML = `
+      <h3 style="margin:0 0 8px;font-size:1rem">Resumo de @${escapeHtml(report.login)}</h3>
+      <p style="margin:0 0 10px">${escapeHtml(report.text)}</p>
+      ${
+        report.bullets && report.bullets.length
+          ? `<ul class="chat-help-list">${report.bullets.map((b) => `<li>${escapeHtml(b)}</li>`).join("")}</ul>`
+          : ""
+      }
+      <p class="meta" style="margin:10px 0 0">${when}${url ? ` · <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">abrir no GitHub</a>` : ""}</p>
+    `;
+  }
+
+  function renderGithub() {
+    fillGithubMemberSelect();
+    const box = document.getElementById("github-reports");
+    const count = document.getElementById("github-report-count");
+    const reports = Array.isArray(data.githubReports) ? data.githubReports : [];
+    if (count) count.textContent = String(reports.length);
+    if (!box) return;
+    if (!reports.length) {
+      box.innerHTML = '<div class="list-empty">Nenhum GitHub vinculado ainda.</div>';
+      return;
+    }
+    box.innerHTML = reports
+      .slice()
+      .sort((a, b) => (b.at || 0) - (a.at || 0))
+      .map((r) => {
+        const when = new Date(r.at).toLocaleString("pt-BR", {
           day: "2-digit",
           month: "2-digit",
           hour: "2-digit",
           minute: "2-digit",
         });
-        return `<div class="row-item">
+        const commits = r.stats && r.stats.commits ? r.stats.commits : 0;
+        return `<button type="button" class="row-item github-report" data-github-member="${escapeHtml(r.memberId)}" style="width:100%;text-align:left;background:transparent;border:0;border-bottom:1px solid var(--border)">
           <div>
-            <strong>${escapeHtml(c.message)}</strong>
-            <div class="meta">${escapeHtml(c.projectName)} · ${when}${c.hash ? " · " + escapeHtml(c.hash.slice(0, 8)) : ""}</div>
+            <strong>${escapeHtml(memberName(r.memberId))}</strong>
+            <div class="meta">@${escapeHtml(r.login)} · ${commits} commit(s) · ${when}</div>
           </div>
-          <span class="badge badge-progress">+${c.delta}%</span>
-          ${c.authorId ? `<span class="badge badge-done">${escapeHtml(memberName(c.authorId))} +${window.CybhorTeamOps ? window.CybhorTeamOps.pointsForCommit(c) : 0} pts</span>` : ""}
-        </div>`;
+        </button>`;
       })
       .join("");
   }
 
-  function handleCommitAnalyze(e) {
-    e.preventDefault();
-    const analyzer = window.CybhorCommitAnalyzer;
-    const resultBox = document.getElementById("commit-result");
-    if (!analyzer) {
-      toast("Analisador de commit não carregou");
-      return;
-    }
-
-    const projectId = document.getElementById("commit-project").value;
-    const project = data.projects.find((p) => p.id === projectId);
-    const message = document.getElementById("commit-message").value.trim();
-    const diff = document.getElementById("commit-diff").value;
-    const hash = document.getElementById("commit-hash").value.trim();
-    const authorId = document.getElementById("commit-author")?.value || null;
-
-    if (!project) {
-      toast("Selecione um projeto");
-      return;
-    }
-
-    const analysis = analyzer.analyzeCommit({ message, diff, hash });
-    const applied = analyzer.applyCommitToProject(project, analysis);
-    project.progress = applied.after;
-    project.status = applied.status;
-
-    // Move tarefas relacionadas pelo nome na mensagem
-    const msgLow = message.toLowerCase();
-    data.tasks.forEach((t) => {
-      if (msgLow.includes(String(t.title).toLowerCase().slice(0, 12)) && analysis.type !== "wip") {
-        if (analysis.delta >= 10 && !analysis.incomplete) markTaskDone(t);
-        else if (t.column === "todo") t.column = "doing";
-      }
+  function absorbGithubCommits(memberId, commits) {
+    if (!Array.isArray(data.commits)) data.commits = [];
+    const known = new Set(data.commits.map((c) => c.hash).filter(Boolean));
+    const weekAgo = Date.now() - 7 * 86400000;
+    let added = 0;
+    (commits || []).forEach((c) => {
+      if (added >= 8) return;
+      if (!c || !c.sha || known.has(c.sha)) return;
+      const at = Date.parse(c.at);
+      if (!Number.isFinite(at) || at < weekAgo) return;
+      known.add(c.sha);
+      data.commits.unshift({
+        id: uid(),
+        projectId: null,
+        projectName: c.repo || "GitHub",
+        message: c.message || "Commit",
+        hash: c.sha,
+        authorId: memberId,
+        delta: 0,
+        source: "github",
+        at,
+      });
+      added += 1;
     });
-
-    if (window.CybhorProgressChat) {
-      window.CybhorProgressChat.applyActions(data, [{ type: "recalc_okrs" }]);
-    }
-
-    data.commits.unshift({
-      id: uid(),
-      projectId: project.id,
-      projectName: project.name,
-      message,
-      hash,
-      authorId,
-      delta: applied.delta,
-      confidence: analysis.confidence,
-      type: analysis.type,
-      summary: analysis.summary,
-      at: Date.now(),
-    });
-
-    saveData();
-    renderAll();
-
-    resultBox.classList.remove("hidden");
-    resultBox.innerHTML = `
-      <h3 style="margin:0 0 8px;font-size:1rem">Análise automática</h3>
-      <p style="margin:0 0 10px">
-        <strong>${escapeHtml(project.name)}</strong>:
-        ${applied.before}% → <strong>${applied.after}%</strong>
-        <span class="badge badge-progress">+${applied.delta}%</span>
-        · confiança ${analysis.confidence}%
-      </p>
-      <ul class="chat-help-list">${analysis.summary.map((s) => `<li>${escapeHtml(s)}</li>`).join("")}</ul>
-      ${analysis.incomplete ? '<p class="meta" style="margin-top:10px;color:var(--warn)">Commit incompleto/WIP — avanço limitado de propósito.</p>' : ""}
-    `;
-    const commitPts = window.CybhorTeamOps ? window.CybhorTeamOps.pointsForCommit(data.commits[0]) : 0;
-    toast(`Projeto ${project.name}: +${applied.delta}% · ${memberName(authorId)} +${commitPts} pts`);
+    return added;
   }
 
-  const COMMIT_SAMPLE = `feat: autenticação JWT no login
+  async function handleGithubLink(e) {
+    e.preventDefault();
+    const member = selectedGithubMember();
+    if (!member) {
+      toast("Selecione a pessoa");
+      return;
+    }
+    const linked = Boolean(member.githubLogin);
+    const login = linked ? member.githubLogin : (document.getElementById("github-login")?.value || "").trim();
+    if (!/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/.test(login) || /^\d+$/.test(login)) {
+      toast("Use o usuário do GitHub, não o ID numérico");
+      return;
+    }
+    const status = document.getElementById("github-status");
+    const submit = document.getElementById("github-submit");
+    if (status) status.textContent = "Conferindo no GitHub…";
+    if (submit) submit.disabled = true;
+    try {
+      const res = await api("/github/summary", {
+        method: "POST",
+        body: JSON.stringify({ login }),
+      });
+      const profile = res.profile || {};
+      member.githubLogin = profile.login || login;
+      member.githubName = profile.name || "";
+      member.githubUrl = safeGithubUrl(profile.html_url) || `https://github.com/${member.githubLogin}`;
+      const summary = res.summary || {};
+      const report = {
+        memberId: member.id,
+        login: member.githubLogin,
+        text: summary.text || "",
+        bullets: Array.isArray(summary.bullets) ? summary.bullets : [],
+        stats: res.stats || { commits: 0, repos: 0, pulls: 0 },
+        url: member.githubUrl,
+        at: Date.now(),
+      };
+      if (!Array.isArray(data.githubReports)) data.githubReports = [];
+      data.githubReports = data.githubReports.filter((r) => r.memberId !== member.id);
+      data.githubReports.unshift(report);
+      const novos = absorbGithubCommits(member.id, res.commits || []);
+      const input = document.getElementById("github-login");
+      if (input) input.value = "";
+      saveData();
+      renderAll();
+      if (status) status.textContent = "";
+      const pts = novos * (window.CybhorTeamOps ? window.CybhorTeamOps.COMMIT_BASE_POINTS : 5);
+      toast(linked ? "Resumo atualizado" : `GitHub vinculado${pts ? " · +" + pts + " pts" : ""}`);
+    } catch (err) {
+      const msg = (err && err.message) || "Não foi possível consultar o GitHub";
+      if (status) status.textContent = msg;
+      toast(msg);
+    } finally {
+      if (submit) submit.disabled = false;
+    }
+  }
 
-diff --git a/src/auth/login.js b/src/auth/login.js
-index 111..222 100644
---- a/src/auth/login.js
-+++ b/src/auth/login.js
-@@ -1,6 +1,28 @@
-+import jwt from 'jsonwebtoken';
-+
- export async function login(email, password) {
--  return { ok: false };
-+  const user = await findUser(email);
-+  if (!user || !(await verifyPassword(password, user.hash))) {
-+    return { ok: false, error: 'invalid' };
-+  }
-+  const token = jwt.sign({ sub: user.id }, process.env.JWT_SECRET, { expiresIn: '8h' });
-+  return { ok: true, token };
- }
-diff --git a/src/auth/login.test.js b/src/auth/login.test.js
-new file mode 100644
---- /dev/null
-+++ b/src/auth/login.test.js
-@@ -0,0 +1,12 @@
-+import { login } from './login.js';
-+
-+test('login returns token', async () => {
-+  const res = await login('admin@cybhor.com', 'cybhor123');
-+  expect(res.ok).toBe(true);
-+  expect(res.token).toBeTruthy();
-+});
-`;
+  function unlinkGithub() {
+    const member = selectedGithubMember();
+    if (!member || !member.githubLogin) return;
+    const login = member.githubLogin;
+    if (!confirm(`Desvincular @${login} de ${member.name}?`)) return;
+    delete member.githubLogin;
+    delete member.githubName;
+    delete member.githubUrl;
+    data.githubReports = (data.githubReports || []).filter((r) => r.memberId !== member.id);
+    data.commits = (data.commits || []).filter((c) => !(c.source === "github" && c.authorId === member.id));
+    saveData();
+    renderAll();
+    const input = document.getElementById("github-login");
+    if (input) input.value = "";
+    toast(`GitHub @${login} desvinculado`);
+  }
 
   function renderChat() {
     const box = document.getElementById("chat-messages");
@@ -842,13 +971,13 @@ new file mode 100644
       data.chatLog.push({
         id: uid(),
         role: "bot",
-        text: "Não dá para informar % manualmente (evita inventar progresso). A porcentagem só sobe na aba Desenvolvimento, ao analisar o diff do commit.",
+        text: "Não dá para informar % manualmente. O resumo de código sai do GitHub vinculado, no menu GitHub.",
         at: Date.now(),
       });
       saveData();
       renderChat();
       switchView("desenvolvimento");
-      toast("% só via commit");
+      toast("Resumo só via GitHub");
       return;
     }
 
@@ -951,7 +1080,8 @@ new file mode 100644
 
   function renderProjects() {
     const html = projectRowsHtml();
-    document.getElementById("projects-body").innerHTML = html;
+    const body = document.getElementById("projects-body");
+    if (body) body.innerHTML = html;
     const dup = document.getElementById("projects-body-dup");
     if (dup) dup.innerHTML = html;
   }
@@ -987,6 +1117,7 @@ new file mode 100644
 
   function renderNotices() {
     const box = document.getElementById("notices-list");
+    if (!box) return;
     if (!data.notices.length) {
       box.innerHTML = '<div class="list-empty">Nenhum aviso no mural.</div>';
       return;
@@ -1008,7 +1139,9 @@ new file mode 100644
   function renderFinance() {
     const box = document.getElementById("finance-list");
     const balance = data.finance.reduce((acc, f) => acc + (f.type === "in" ? f.amount : -f.amount), 0);
-    document.getElementById("finance-balance").textContent = money(balance);
+    const balEl = document.getElementById("finance-balance");
+    if (balEl) balEl.textContent = money(balance);
+    if (!box) return;
     if (!data.finance.length) {
       box.innerHTML = '<div class="list-empty">Sem lançamentos.</div>';
       return;
@@ -1032,6 +1165,7 @@ new file mode 100644
 
   function renderIdeas() {
     const box = document.getElementById("ideas-list");
+    if (!box) return;
     if (!data.ideas.length) {
       box.innerHTML = '<div class="list-empty">Nenhuma ideia ainda.</div>';
       return;
@@ -1351,10 +1485,16 @@ new file mode 100644
   }
 
   /* ——— Theme ——— */
-  function applyTheme(theme) {
+  function applyTheme(theme, { charts = true } = {}) {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("cybhor_theme", theme);
-    buildCharts();
+    if (charts) {
+      try {
+        buildCharts();
+      } catch (err) {
+        console.warn("charts", err);
+      }
+    }
   }
 
   function toggleTheme() {
@@ -1362,12 +1502,17 @@ new file mode 100644
     applyTheme(cur === "light" ? "dark" : "light");
   }
 
+  function on(id, event, handler) {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener(event, handler);
+  }
+
   /* ——— Events ——— */
   function wire() {
-    document.getElementById("login-form").addEventListener("submit", handleLogin);
-    document.getElementById("btn-logout").addEventListener("click", handleLogout);
-    document.getElementById("btn-theme").addEventListener("click", toggleTheme);
-    document.getElementById("btn-reset").addEventListener("click", () => {
+    on("login-form", "submit", handleLogin);
+    on("btn-logout", "click", handleLogout);
+    on("btn-theme", "click", toggleTheme);
+    on("btn-reset", "click", () => {
       if (confirm("Zerar dados e restaurar o exemplo inicial?")) {
         data = defaultData();
         saveData();
@@ -1401,18 +1546,10 @@ new file mode 100644
     const chatForm = document.getElementById("chat-form");
     if (chatForm) chatForm.addEventListener("submit", handleChatSubmit);
 
-    const commitForm = document.getElementById("commit-form");
-    if (commitForm) commitForm.addEventListener("submit", handleCommitAnalyze);
-
-    const sampleBtn = document.getElementById("btn-commit-sample");
-    if (sampleBtn) {
-      sampleBtn.addEventListener("click", () => {
-        document.getElementById("commit-message").value = "feat: autenticação JWT no login";
-        document.getElementById("commit-diff").value = COMMIT_SAMPLE;
-        document.getElementById("commit-hash").value = "a1b2c3d";
-        toast("Exemplo colado — clique em Analisar commit");
-      });
-    }
+    const githubForm = document.getElementById("github-link-form");
+    if (githubForm) githubForm.addEventListener("submit", handleGithubLink);
+    document.getElementById("github-member")?.addEventListener("change", syncGithubForm);
+    document.getElementById("github-unlink")?.addEventListener("click", unlinkGithub);
 
     document.querySelectorAll("[data-chat-example]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -1422,25 +1559,30 @@ new file mode 100644
       });
     });
 
-    document.getElementById("btn-add-task").addEventListener("click", () => {
+    on("btn-add-task", "click", () => {
       fillTaskSelects();
       openModal("modal-task");
     });
-    document.getElementById("btn-add-project").addEventListener("click", () => {
+    on("btn-add-project", "click", () => {
       fillInitiativeSelects();
       openModal("modal-project");
     });
-    const btnAddInit = document.getElementById("btn-add-initiative");
-    if (btnAddInit) {
-      btnAddInit.addEventListener("click", () => {
-        fillInitiativeSelects();
-        openModal("modal-initiative");
-      });
-    }
-    document.getElementById("btn-add-event").addEventListener("click", () => openModal("modal-event"));
-    document.getElementById("btn-add-notice").addEventListener("click", () => openModal("modal-notice"));
-    document.getElementById("btn-add-finance").addEventListener("click", () => openModal("modal-finance"));
-    document.getElementById("btn-add-idea").addEventListener("click", () => openModal("modal-idea"));
+    on("btn-add-initiative", "click", () => {
+      fillInitiativeSelects();
+      openModal("modal-initiative");
+    });
+    on("btn-add-event", "click", () => openModal("modal-event"));
+    on("btn-add-notice", "click", () => openModal("modal-notice"));
+    on("btn-add-finance", "click", () => openModal("modal-finance"));
+    on("btn-add-idea", "click", () => openModal("modal-idea"));
+    on("btn-add-team", "click", () => {
+      fillTaskSelects();
+      openModal("modal-team");
+    });
+    on("btn-add-member", "click", () => {
+      fillTaskSelects();
+      openModal("modal-member");
+    });
 
     document.querySelectorAll("[data-close-modal]").forEach((b) => b.addEventListener("click", closeModals));
     document.querySelectorAll(".modal-backdrop").forEach((b) => {
@@ -1449,7 +1591,7 @@ new file mode 100644
       });
     });
 
-    document.getElementById("form-task").addEventListener("submit", (e) => {
+    on("form-task", "submit", (e) => {
       e.preventDefault();
       addTask(
         document.getElementById("task-title").value.trim(),
@@ -1463,16 +1605,7 @@ new file mode 100644
       closeModals();
     });
 
-    document.getElementById("btn-add-team")?.addEventListener("click", () => {
-      fillTaskSelects();
-      openModal("modal-team");
-    });
-    document.getElementById("btn-add-member")?.addEventListener("click", () => {
-      fillTaskSelects();
-      openModal("modal-member");
-    });
-
-    document.getElementById("form-team")?.addEventListener("submit", (e) => {
+    on("form-team", "submit", (e) => {
       e.preventDefault();
       addTeam(
         document.getElementById("team-name").value.trim(),
@@ -1483,7 +1616,7 @@ new file mode 100644
       closeModals();
     });
 
-    document.getElementById("form-member")?.addEventListener("submit", (e) => {
+    on("form-member", "submit", (e) => {
       e.preventDefault();
       addMember(
         document.getElementById("member-name").value.trim(),
@@ -1494,7 +1627,7 @@ new file mode 100644
       closeModals();
     });
 
-    document.getElementById("form-project").addEventListener("submit", (e) => {
+    on("form-project", "submit", (e) => {
       e.preventDefault();
       addProject(
         document.getElementById("project-name").value.trim(),
@@ -1503,34 +1636,33 @@ new file mode 100644
         document.getElementById("project-initiative").value
       );
       e.target.reset();
-      document.getElementById("project-owner").value = "Gabriel Silva";
+      const owner = document.getElementById("project-owner");
+      if (owner) owner.value = "Gabriel Silva";
       closeModals();
     });
 
-    const formInit = document.getElementById("form-initiative");
-    if (formInit) {
-      formInit.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const areas = [...document.querySelectorAll('input[name="init-area"]:checked')].map((i) => i.value);
-        const projectIds = [...document.querySelectorAll('input[name="init-project"]:checked')].map((i) => i.value);
-        if (!areas.length) {
-          toast("Selecione ao menos uma área");
-          return;
-        }
-        addInitiative(
-          document.getElementById("initiative-name").value.trim(),
-          document.getElementById("initiative-desc").value.trim(),
-          document.getElementById("initiative-owner").value.trim(),
-          areas,
-          projectIds
-        );
-        e.target.reset();
-        document.getElementById("initiative-owner").value = "Gabriel Silva";
-        closeModals();
-      });
-    }
+    on("form-initiative", "submit", (e) => {
+      e.preventDefault();
+      const areas = [...document.querySelectorAll('input[name="init-area"]:checked')].map((i) => i.value);
+      const projectIds = [...document.querySelectorAll('input[name="init-project"]:checked')].map((i) => i.value);
+      if (!areas.length) {
+        toast("Selecione ao menos uma área");
+        return;
+      }
+      addInitiative(
+        document.getElementById("initiative-name").value.trim(),
+        document.getElementById("initiative-desc").value.trim(),
+        document.getElementById("initiative-owner").value.trim(),
+        areas,
+        projectIds
+      );
+      e.target.reset();
+      const owner = document.getElementById("initiative-owner");
+      if (owner) owner.value = "Gabriel Silva";
+      closeModals();
+    });
 
-    document.getElementById("form-event").addEventListener("submit", (e) => {
+    on("form-event", "submit", (e) => {
       e.preventDefault();
       addEvent(
         document.getElementById("event-time").value,
@@ -1541,7 +1673,7 @@ new file mode 100644
       closeModals();
     });
 
-    document.getElementById("form-notice").addEventListener("submit", (e) => {
+    on("form-notice", "submit", (e) => {
       e.preventDefault();
       addNotice(
         document.getElementById("notice-title").value.trim(),
@@ -1552,7 +1684,7 @@ new file mode 100644
       closeModals();
     });
 
-    document.getElementById("form-finance").addEventListener("submit", (e) => {
+    on("form-finance", "submit", (e) => {
       e.preventDefault();
       addFinance(
         document.getElementById("finance-type").value,
@@ -1563,7 +1695,7 @@ new file mode 100644
       closeModals();
     });
 
-    document.getElementById("form-idea").addEventListener("submit", (e) => {
+    on("form-idea", "submit", (e) => {
       e.preventDefault();
       addIdea(document.getElementById("idea-title").value.trim());
       e.target.reset();
@@ -1571,10 +1703,17 @@ new file mode 100644
     });
 
     document.body.addEventListener("click", (e) => {
-      const t = e.target.closest("[data-del-task],[data-del-project],[data-del-event],[data-del-notice],[data-del-finance],[data-del-idea],[data-del-initiative],[data-del-team],[data-del-member],[data-complete-task],[data-vote-idea]");
+      const t = e.target.closest("[data-del-task],[data-del-project],[data-del-event],[data-del-notice],[data-del-finance],[data-del-idea],[data-del-initiative],[data-del-team],[data-del-member],[data-complete-task],[data-vote-idea],[data-github-member]");
       if (!t) return;
       if (t.dataset.completeTask) {
         completeTask(t.dataset.completeTask);
+        return;
+      }
+      if (t.dataset.githubMember) {
+        const sel = document.getElementById("github-member");
+        if (sel) sel.value = t.dataset.githubMember;
+        switchView("desenvolvimento");
+        syncGithubForm();
         return;
       }
       if (t.dataset.delTask) removeById("tasks", t.dataset.delTask, "Tarefa removida");
@@ -1627,9 +1766,8 @@ new file mode 100644
       });
     });
 
-    const search = document.getElementById("global-search");
-    search.addEventListener("input", () => {
-      const q = search.value.trim().toLowerCase();
+    on("global-search", "input", (e) => {
+      const q = e.target.value.trim().toLowerCase();
       document.querySelectorAll("#projects-body tr").forEach((tr) => {
         tr.style.display = !q || tr.textContent.toLowerCase().includes(q) ? "" : "none";
       });
@@ -1641,23 +1779,26 @@ new file mode 100644
 
   document.addEventListener("DOMContentLoaded", async () => {
     const savedTheme = localStorage.getItem("cybhor_theme") || "light";
-    applyTheme(savedTheme);
-    wire();
+    applyTheme(savedTheme, { charts: false });
 
+    // Abre o portal primeiro — nunca fica preso na tela de boot.
     try {
-      const me = await api("/me");
-      if (me.user) {
-        setSession(me.user);
-        await loadDataFromApi();
-        showApp(me.user);
-        return;
-      }
-    } catch {
-      /* sessão inválida ou API offline */
+      await enterPortal();
+    } catch (err) {
+      console.error(err);
+      showApp({ id: 1, name: "Equipe Cybhor", role: "Admin", email: "admin@cybhor.com" });
     }
 
-    const cached = getSession();
-    if (cached) setSession(null);
-    showAuth();
+    try {
+      wire();
+    } catch (err) {
+      console.error("wire", err);
+    }
+
+    try {
+      buildCharts();
+    } catch (err) {
+      console.warn("charts", err);
+    }
   });
 })();

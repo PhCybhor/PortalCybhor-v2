@@ -20,7 +20,46 @@ try {
 
     if ($method === 'GET' && $path === '/me') {
         $user = current_user();
-        json_out(['ok' => true, 'user' => $user]);
+        global $CONFIG;
+        json_out([
+            'ok' => true,
+            'user' => $user,
+            'open_access' => !empty($CONFIG['open_access']),
+        ]);
+    }
+
+    // Acesso direto ao portal (sem tela de login) quando open_access=true.
+    if ($method === 'POST' && $path === '/enter') {
+        global $CONFIG;
+        if (empty($CONFIG['open_access'])) {
+            json_out(['ok' => false, 'error' => 'Acesso aberto desativado'], 403);
+        }
+
+        $existing = current_user();
+        if ($existing) {
+            json_out(['ok' => true, 'user' => $existing, 'open_access' => true]);
+        }
+
+        $adminEmail = strtolower(trim((string)($CONFIG['admin_email'] ?? '')));
+        $row = null;
+        if ($adminEmail !== '') {
+            $stmt = db()->prepare(
+                'SELECT id, email, name, role, is_active FROM users WHERE email = ? AND is_active = 1 LIMIT 1'
+            );
+            $stmt->execute([$adminEmail]);
+            $row = $stmt->fetch() ?: null;
+        }
+        if (!$row) {
+            $row = db()->query(
+                'SELECT id, email, name, role, is_active FROM users WHERE is_active = 1 ORDER BY id ASC LIMIT 1'
+            )->fetch() ?: null;
+        }
+        if (!$row) {
+            json_out(['ok' => false, 'error' => 'Nenhum usuário ativo no portal'], 500);
+        }
+
+        $user = issue_session_for_user($row);
+        json_out(['ok' => true, 'user' => $user, 'open_access' => true]);
     }
 
     if ($method === 'POST' && $path === '/login') {
@@ -39,28 +78,8 @@ try {
             json_out(['ok' => false, 'error' => 'E-mail ou senha incorretos'], 401);
         }
 
-        global $CONFIG;
-        $days = max(1, (int)($CONFIG['session_days'] ?? 7));
-        $token = bin2hex(random_bytes(32));
-        $meta = client_meta();
-        $expires = (new DateTimeImmutable('now', new DateTimeZone('UTC')))
-            ->modify("+{$days} days")
-            ->format('Y-m-d H:i:s');
-
-        db()->prepare(
-            'INSERT INTO auth_sessions (id, user_id, expires_at, ip_hash, user_agent_hash) VALUES (?, ?, ?, ?, ?)'
-        )->execute([$token, (int)$row['id'], $expires, $meta['ip_hash'], $meta['ua_hash']]);
-
-        set_session_cookie($token, $days);
-        json_out([
-            'ok' => true,
-            'user' => [
-                'id' => (int)$row['id'],
-                'email' => (string)$row['email'],
-                'name' => (string)$row['name'],
-                'role' => (string)$row['role'],
-            ],
-        ]);
+        $user = issue_session_for_user($row);
+        json_out(['ok' => true, 'user' => $user]);
     }
 
     if ($method === 'POST' && $path === '/logout') {
@@ -108,6 +127,17 @@ try {
              ON DUPLICATE KEY UPDATE payload = VALUES(payload), updated_by = VALUES(updated_by)'
         )->execute([$encoded, $user['id']]);
         json_out(['ok' => true]);
+    }
+
+    if ($method === 'POST' && $path === '/github/summary') {
+        require_user();
+        require_once __DIR__ . '/github_summary.php';
+        $body = read_json_body();
+        $login = trim((string)($body['login'] ?? ''));
+        $result = github_build_summary($login);
+        $status = (int)($result['status'] ?? 200);
+        unset($result['status']);
+        json_out($result, $result['ok'] ? 200 : $status);
     }
 
     json_out(['ok' => false, 'error' => 'Rota não encontrada'], 404);

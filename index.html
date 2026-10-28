@@ -4,41 +4,39 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Portal Cybhor v2 — iniciativas, projetos, commits e operação da equipe.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <title>Portal Cybhor v2</title>
-  <link rel="stylesheet" href="assets/css/theme.css">
-  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/theme.css?v=20261028a">
+  <link rel="stylesheet" href="assets/css/base.css?v=20261028a">
+  <style>
+    /* fallback crítico se CSS remoto atrasar */
+    .boot-screen{min-height:100vh;display:grid;place-items:center;background:#f3f4f6;margin:0}
+    .boot-card{width:min(320px,92vw);background:#fff;border:1px solid #d7dbe3;border-radius:6px;padding:28px 24px;font-family:Segoe UI,system-ui,sans-serif}
+    .boot-card p{margin:14px 0 0;color:#5c6570}
+    .app-shell.hidden,#auth-screen{display:none!important}
+  </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
-  <script src="assets/js/progress-chat.js" defer></script>
-  <script src="assets/js/commit-analyzer.js" defer></script>
-  <script src="assets/js/team-ops.js" defer></script>
-  <script src="assets/js/app.js" defer></script>
+  <script src="assets/js/progress-chat.js?v=20261028a" defer></script>
+  <script src="assets/js/team-ops.js?v=20261028a" defer></script>
+  <script src="assets/js/app.js?v=20261028a" defer></script>
 </head>
 <body>
 
-  <div id="auth-screen" class="auth-screen">
-    <form id="login-form" class="auth-card" autocomplete="on">
+  <div id="boot-screen" class="boot-screen">
+    <div class="boot-card">
       <div class="brand-row">
-        <span class="brand-mark">C</span>
-        CYBHOR
-        <span class="ver-pill">v2</span>
+        <span class="brand-mark" aria-hidden="true">C</span>
+        <div class="brand-text">
+          <strong>CYBHOR</strong>
+          <span>Portal</span>
+        </div>
       </div>
-      <h1>Entrar</h1>
-      <p class="sub">Organize a equipe e as tarefas do dia.</p>
-      <div id="auth-error" class="auth-error hidden" role="alert"></div>
-      <div class="field">
-        <label for="login-email">E-mail</label>
-        <input class="input" id="login-email" type="email" required autocomplete="username" placeholder="seu@email.com">
-      </div>
-      <div class="field">
-        <label for="login-password">Senha</label>
-        <input class="input" id="login-password" type="password" required autocomplete="current-password" placeholder="••••••••">
-      </div>
-      <button class="btn btn-primary btn-block" type="submit" style="height:40px">Entrar</button>
-      <div class="auth-hint">
-        Conta MySQL (Hostinger): <code>admin@cybhor.com</code> / <code>cybhor123</code><br>
-        Sessão segura no servidor · dados persistidos no banco.
-      </div>
-    </form>
+      <p data-boot-msg>Abrindo o portal…</p>
+    </div>
+  </div>
+
+  <div id="auth-screen" class="auth-screen hidden" aria-hidden="true">
+    <form id="login-form" class="auth-card hidden" autocomplete="on"></form>
   </div>
 
   <div id="sidebar-backdrop" class="sidebar-backdrop" hidden></div>
@@ -46,9 +44,11 @@
   <div id="app-shell" class="app-shell hidden">
     <aside class="sidebar" id="sidebar">
       <div class="brand-row">
-        <span class="brand-mark">C</span>
-        CYBHOR
-        <span class="ver-pill" style="border-color:#3a4656;color:#9aa5b5">v2</span>
+        <span class="brand-mark" aria-hidden="true">C</span>
+        <div class="brand-text">
+          <strong>CYBHOR</strong>
+          <span>Portal</span>
+        </div>
       </div>
       <nav class="side-nav" aria-label="Principal">
         <button type="button" class="is-active" data-view="dashboard">Início</button>
@@ -56,7 +56,7 @@
         <button type="button" data-view="tarefas">Tarefas</button>
         <button type="button" data-view="equipes">Pessoas</button>
         <button type="button" data-view="projetos">Projetos</button>
-        <button type="button" data-view="desenvolvimento">Código</button>
+        <button type="button" data-view="desenvolvimento">GitHub</button>
         <div class="side-label">Mais</div>
         <button type="button" data-view="iniciativas">Campanhas</button>
         <button type="button" data-view="assistente">Chat</button>
@@ -65,8 +65,7 @@
         <button type="button" data-view="atividade">Histórico</button>
       </nav>
       <div class="side-foot">
-        <button class="btn btn-sm" type="button" id="btn-export" style="width:100%;justify-content:center;background:transparent;color:#c5ced8;border-color:#3a4656">Salvar cópia</button>
-        <button class="btn btn-sm" type="button" id="btn-logout" style="width:100%;justify-content:center;background:transparent;color:#c5ced8;border-color:#3a4656">Sair</button>
+        <button class="btn btn-sm side-foot-btn" type="button" id="btn-export">Salvar cópia</button>
       </div>
     </aside>
 
@@ -74,20 +73,22 @@
       <header class="topbar">
         <div class="topbar-left">
           <button class="icon-btn menu-toggle" id="btn-menu" type="button" aria-label="Menu">☰</button>
-          <h1 id="page-title">Início</h1>
+          <div class="topbar-titles">
+            <h1 id="page-title">Início</h1>
+            <p class="topbar-sub">Operação da equipe</p>
+          </div>
         </div>
         <div class="search">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
-          <input id="global-search" type="search" placeholder="Buscar…" aria-label="Buscar">
+          <input id="global-search" type="search" placeholder="Buscar tarefas, projetos…" aria-label="Buscar">
         </div>
         <div class="topbar-actions">
-          <button class="icon-btn" id="btn-theme" type="button" title="Tema" aria-label="Tema">◐</button>
-          <button class="icon-btn" id="btn-reset" type="button" title="Restaurar exemplo" aria-label="Reset">↺</button>
+          <button class="icon-btn" id="btn-theme" type="button" title="Tema claro/escuro" aria-label="Tema">◐</button>
           <div class="user-chip">
-            <img class="avatar" src="https://i.pravatar.cc/64?img=12" alt="">
+            <span class="avatar avatar-initials" id="user-avatar" aria-hidden="true">CY</span>
             <div>
-              <strong id="user-name">Usuário</strong>
-              <span id="user-role">Admin</span>
+              <strong id="user-name">Equipe</strong>
+              <span id="user-role">Portal</span>
             </div>
           </div>
         </div>
@@ -96,7 +97,7 @@
       <main class="page">
         <!-- INÍCIO (simples) -->
         <section class="view is-active" data-view="dashboard">
-          <p class="simple-lead">Faça só estes 3 passos. O resto fica no menu.</p>
+          <p class="simple-lead">Comece por aqui. O restante fica no menu lateral.</p>
 
           <div class="simple-steps">
             <button type="button" class="simple-step" data-go="equipes">
@@ -136,7 +137,7 @@
           <div class="actions" style="margin-top:16px">
             <button class="btn btn-primary" type="button" id="btn-add-task">+ Nova tarefa</button>
             <button class="btn" type="button" id="btn-add-project">+ Projeto</button>
-            <button class="btn" type="button" data-go="desenvolvimento">Subir código</button>
+            <button class="btn" type="button" data-go="desenvolvimento">Resumo GitHub</button>
           </div>
 
           <!-- IDs ocultos para o JS continuar funcionando -->
@@ -150,7 +151,7 @@
             <div id="events-list"></div>
             <div id="activity-preview"></div>
             <div id="notices-list"></div>
-            <tbody id="projects-body"></tbody>
+            <div id="projects-body"></div>
             <span id="count-todo"></span><span id="count-doing"></span><span id="count-done"></span>
             <div id="kanban-todo"></div><div id="kanban-doing"></div><div id="kanban-done"></div>
             <button type="button" id="btn-add-event"></button>
@@ -198,7 +199,7 @@
                 <ul>
                   <li>Tarefa concluída: Alta 30 · Média 20 · Baixa 10</li>
                   <li>Entregou até o prazo: +10</li>
-                  <li>Commit analisado: 5 + % que o projeto subiu</li>
+                  <li>Commit público no GitHub (últimos 7 dias, até 8 por atualização): 5 pts</li>
                   <li>Tarefa criada já como concluída ou sem responsável: 0</li>
                 </ul>
               </div>
@@ -220,7 +221,7 @@
         <!-- PROJETOS -->
         <section class="view" data-view="projetos">
           <div class="page-head">
-            <div><p class="lead" style="margin:0">Lista de projetos. A % sobe quando você manda código em <strong>Código</strong>.</p></div>
+            <div><p class="lead" style="margin:0">Lista de projetos. O resumo do que cada pessoa fez sai do GitHub vinculado.</p></div>
             <button class="btn btn-primary" type="button" onclick="document.getElementById('btn-add-project').click()">+ Projeto</button>
           </div>
           <section class="panel">
@@ -257,48 +258,34 @@
           </section>
         </section>
 
-        <!-- DEV -->
+        <!-- GITHUB -->
         <section class="view" data-view="desenvolvimento">
           <div class="page-head">
-            <div><p class="lead" style="margin:0">Cole o código do commit. O sistema calcula a % sozinho (não digite %).</p></div>
+            <div><p class="lead" style="margin:0">Vincule o GitHub. O portal confere a conta e escreve o resumo — a pessoa não preenche relatório nem cola commit.</p></div>
           </div>
           <div class="chat-layout">
             <section class="panel">
-              <form id="commit-form">
-                <div class="grid grid-2" style="margin-bottom:0">
-                  <div class="field">
-                    <label for="commit-project">Projeto</label>
-                    <select class="select" id="commit-project" required></select>
-                  </div>
-                  <div class="field">
-                    <label for="commit-author">Quem fez</label>
-                    <select class="select" id="commit-author" required></select>
-                  </div>
-                </div>
-                <div class="grid grid-2" style="margin-bottom:0">
-                  <div class="field">
-                    <label for="commit-hash">Hash (opcional)</label>
-                    <input class="input" id="commit-hash" maxlength="64" placeholder="a1b2c3d">
-                  </div>
-                  <div class="field">
-                    <label for="commit-message">Mensagem</label>
-                    <input class="input" id="commit-message" required placeholder="feat: …">
-                  </div>
-                </div>
+              <form id="github-link-form">
                 <div class="field">
-                  <label for="commit-diff">Diff / código</label>
-                  <textarea class="textarea" id="commit-diff" required style="min-height:220px;font-family:ui-monospace,monospace;font-size:0.82rem" placeholder="git show / git diff"></textarea>
+                  <label for="github-member">Pessoa</label>
+                  <select class="select" id="github-member" required></select>
                 </div>
+                <div class="field" id="github-login-field">
+                  <label for="github-login">Usuário do GitHub</label>
+                  <input class="input" id="github-login" name="github-login" maxlength="39" autocomplete="off" spellcheck="false" placeholder="usuario" inputmode="text">
+                </div>
+                <p class="meta" id="github-linked-note" hidden></p>
                 <div class="actions">
-                  <button class="btn btn-primary" type="submit">Analisar commit</button>
-                  <button class="btn" type="button" id="btn-commit-sample">Colar exemplo</button>
+                  <button class="btn btn-primary" type="submit" id="github-submit">Vincular GitHub</button>
+                  <button class="btn" type="button" id="github-unlink" hidden>Desvincular</button>
                 </div>
               </form>
-              <div id="commit-result" class="commit-result hidden"></div>
+              <p class="meta" id="github-status" role="status"></p>
+              <div id="github-summary" class="commit-result hidden"></div>
             </section>
             <aside class="panel">
-              <div class="panel-head"><h2>Histórico</h2><span class="meta" id="commit-count">0</span></div>
-              <div id="commits-list"></div>
+              <div class="panel-head"><h2>Resumos</h2><span class="meta" id="github-report-count">0</span></div>
+              <div id="github-reports"></div>
             </aside>
           </div>
         </section>
@@ -327,7 +314,7 @@
               <h2 style="margin:0 0 10px;font-size:0.95rem">Dica</h2>
               <ol class="chat-help-list">
                 <li>Use para dizer o que acabou.</li>
-                <li>Para % do projeto, use o menu <strong>Código</strong>.</li>
+                <li>O resumo de código fica no menu <strong>GitHub</strong>. A pessoa só vincula a conta.</li>
               </ol>
             </aside>
           </div>
@@ -462,7 +449,7 @@
         <label for="project-initiative">Campanha (opcional)</label>
         <select class="select" id="project-initiative"><option value="">Nenhuma</option></select>
       </div>
-      <p class="meta" style="margin:0 0 12px">Começa em 0%. Sobe só quando alguém manda código.</p>
+      <p class="meta" style="margin:0 0 12px">Começa em 0%. A % não é digitada no relatório.</p>
       <div class="field">
         <label for="project-status">Status</label>
         <select class="select" id="project-status">

@@ -1,0 +1,62 @@
+name: Deploy Hostinger
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-portal-hostinger
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar SSH
+        env:
+          HOSTINGER_SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
+          HOSTINGER_KNOWN_HOSTS: ${{ secrets.HOSTINGER_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$HOSTINGER_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$HOSTINGER_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Publicar o portal
+        env:
+          HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
+          HOSTINGER_USER: ${{ secrets.HOSTINGER_USER }}
+          HOSTINGER_PORT: ${{ secrets.HOSTINGER_PORT }}
+        run: |
+          set -euo pipefail
+          DEST="${HOSTINGER_USER}@${HOSTINGER_HOST}"
+          REMOTE="domains/aqua-alligator-304223.hostingersite.com/public_html"
+          RSYNC_SSH="ssh -i ~/.ssh/deploy_key -p ${HOSTINGER_PORT} -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+          rsync -az \
+            -e "$RSYNC_SSH" \
+            --exclude api/config.local.php \
+            --exclude .git \
+            --exclude .github \
+            ./ \
+            "${DEST}:~/${REMOTE}/"
+          ssh -i ~/.ssh/deploy_key -p "$HOSTINGER_PORT" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            "$DEST" "php -l ~/${REMOTE}/api/index.php && php -l ~/${REMOTE}/api/github_summary.php && test -f ~/${REMOTE}/api/config.local.php"
+
+      - name: Conferir o site
+        run: |
+          html=$(curl -fsS --max-time 20 "https://aqua-alligator-304223.hostingersite.com/")
+          echo "$html" | grep -q "Portal Cybhor v2"
+          echo "Portal no ar."
+
+      - name: Remover chave
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
