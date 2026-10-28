@@ -6,19 +6,19 @@
   <meta name="description" content="Portal Cybhor v2 — iniciativas, projetos, commits e operação da equipe.">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <title>Portal Cybhor v2</title>
-  <link rel="stylesheet" href="assets/css/theme.css?v=20261028b">
-  <link rel="stylesheet" href="assets/css/base.css?v=20261028b">
+  <link rel="stylesheet" href="assets/css/theme.css?v=20261028c">
+  <link rel="stylesheet" href="assets/css/base.css?v=20261028c">
   <style>
-    .boot-screen{min-height:100vh;display:grid;place-items:center;background:#f3f4f6;margin:0}
-    .boot-card{width:min(320px,92vw);background:#fff;border:1px solid #d7dbe3;border-radius:6px;padding:28px 24px;font-family:Segoe UI,system-ui,sans-serif}
-    .boot-card p{margin:14px 0 0;color:#5c6570}
+    .boot-screen{min-height:100vh;display:grid;place-items:center;background:#e4e6ea;margin:0}
+    .boot-card{width:min(340px,92vw);background:#f7f8f9;border:1px solid #c9ced6;border-radius:6px;padding:32px 28px;font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif}
+    .boot-card p{margin:16px 0 0;color:#5a616c}
     .app-shell.hidden{display:none!important}
     .boot-screen.hidden{display:none!important}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
-  <script src="assets/js/progress-chat.js?v=20261028b" defer></script>
-  <script src="assets/js/team-ops.js?v=20261028b" defer></script>
-  <script src="assets/js/app.js?v=20261028b" defer></script>
+  <script src="assets/js/progress-chat.js?v=20261028c" defer></script>
+  <script src="assets/js/team-ops.js?v=20261028c" defer></script>
+  <script src="assets/js/app.js?v=20261028c" defer></script>
 </head>
 <body>
 
@@ -31,32 +31,47 @@
           <span>Portal</span>
         </div>
       </div>
-      <p data-boot-msg>Abrindo o portal…</p>
+      <p><span class="boot-pulse" aria-hidden="true"></span><span data-boot-msg>Abrindo o portal…</span></p>
     </div>
   </div>
 
   <div id="auth-screen" class="auth-screen hidden" aria-hidden="true">
-    <form id="login-form" class="auth-card" autocomplete="on">
-      <div class="brand-row" style="margin-bottom:18px">
-        <span class="brand-mark" aria-hidden="true">C</span>
-        <div class="brand-text">
-          <strong>CYBHOR</strong>
-          <span>Portal</span>
+    <aside class="auth-brand" aria-hidden="true">
+      <div class="auth-brand-inner">
+        <div class="brand-row">
+          <span class="brand-mark">C</span>
+          <div class="brand-text">
+            <strong>CYBHOR</strong>
+            <span>Portal</span>
+          </div>
         </div>
+        <h1 class="auth-headline">Operação da equipe, num só lugar.</h1>
+        <p class="auth-lede">Tarefas, GitHub, projetos e o dia a dia da Cybhor — com a conta que o admin criou pra você.</p>
       </div>
-      <h2 class="auth-title">Entrar</h2>
-      <p class="meta" style="margin:0 0 14px">Use o e-mail e a senha criados pelo admin.</p>
-      <div class="field">
-        <label for="login-email">E-mail</label>
-        <input class="input" id="login-email" type="email" required autocomplete="username" placeholder="voce@cybhor.com">
-      </div>
-      <div class="field">
-        <label for="login-password">Senha</label>
-        <input class="input" id="login-password" type="password" required autocomplete="current-password" minlength="8">
-      </div>
-      <p class="meta" id="login-error" role="alert" style="color:var(--danger);min-height:1.2em"></p>
-      <button class="btn btn-primary btn-block" type="submit">Entrar</button>
-    </form>
+    </aside>
+    <div class="auth-panel">
+      <form id="login-form" class="auth-card" autocomplete="on">
+        <div class="brand-row auth-mobile-brand">
+          <span class="brand-mark" aria-hidden="true">C</span>
+          <div class="brand-text">
+            <strong>CYBHOR</strong>
+            <span>Portal</span>
+          </div>
+        </div>
+        <h2 class="auth-title">Entrar</h2>
+        <p class="meta">E-mail e senha da sua conta no portal.</p>
+        <div class="field">
+          <label for="login-email">E-mail</label>
+          <input class="input" id="login-email" type="email" required autocomplete="username" placeholder="voce@cybhor.com">
+        </div>
+        <div class="field">
+          <label for="login-password">Senha</label>
+          <input class="input" id="login-password" type="password" required autocomplete="current-password" minlength="8">
+        </div>
+        <p class="meta" id="login-error" role="alert" style="color:var(--danger);min-height:1.2em"></p>
+        <button class="btn btn-primary btn-block" type="submit">Entrar</button>
+      </form>
+    </div>
   </div>
 
   <div id="sidebar-backdrop" class="sidebar-backdrop" hidden></div>

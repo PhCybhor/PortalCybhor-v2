@@ -1,41 +1,54 @@
+/*
+  Cybhor Portal — direção visual
+  Público: operação interna (dev/ops). Fundo cinza frio #e4e6ea / #0a0b0d.
+  Ação: tinta (#12141a) no botão principal; laranja #e8590c só na marca e CTA raro.
+  Tipo: Segoe UI Variable / Segoe UI. Raio 4 controles, 6 painéis. Profundidade = borda.
+*/
 :root,
 [data-theme="light"] {
-  --bg: #f3f4f6;
-  --surface: #ffffff;
-  --surface-2: #eceef2;
-  --border: #d7dbe3;
-  --text: #171717;
-  --muted: #5c6570;
-  --accent: #ea580c;
+  --bg: #e4e6ea;
+  --surface: #f7f8f9;
+  --surface-2: #eceef1;
+  --border: #c9ced6;
+  --text: #12141a;
+  --muted: #5a616c;
+  --accent: #e8590c;
   --accent-ink: #ffffff;
-  --ok: #15803d;
-  --warn: #b45309;
-  --danger: #b91c1c;
-  --sidebar: #111111;
-  --sidebar-text: #c8cdd4;
-  --sidebar-active: #1f1f1f;
-  --ink-btn: #171717;
-  --ink-btn-text: #ffffff;
-  --sidebar-w: 232px;
-  --topbar-h: 60px;
+  --ok: #1a7a3c;
+  --warn: #9a6700;
+  --danger: #b42318;
+  --sidebar: #12141a;
+  --sidebar-text: #9aa1ab;
+  --sidebar-active: #1e2128;
+  --ink-btn: #12141a;
+  --ink-btn-text: #f7f8f9;
+  --hatch: color-mix(in srgb, var(--text) 4%, transparent);
+  --shadow-float: 0 12px 40px color-mix(in srgb, #12141a 12%, transparent);
+  --sidebar-w: 228px;
+  --topbar-h: 56px;
   --radius: 6px;
+  --radius-sm: 4px;
+  --space: 8px;
+  --font: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
 }
 
 [data-theme="dark"] {
-  --bg: #0c0c0e;
-  --surface: #151518;
-  --surface-2: #1c1c21;
-  --border: #2a2a31;
-  --text: #ececec;
-  --muted: #9a9aa3;
-  --accent: #f97316;
-  --accent-ink: #171717;
-  --ok: #4ade80;
-  --warn: #fbbf24;
-  --danger: #f87171;
-  --sidebar: #09090b;
-  --sidebar-text: #a1a1aa;
-  --sidebar-active: #1a1a1f;
-  --ink-btn: #ececec;
-  --ink-btn-text: #0c0c0e;
+  --bg: #0a0b0d;
+  --surface: #14161b;
+  --surface-2: #1b1e25;
+  --border: #2c3038;
+  --text: #eceef1;
+  --muted: #949aa5;
+  --accent: #f06a1c;
+  --accent-ink: #12141a;
+  --ok: #3ecf6e;
+  --warn: #e8b339;
+  --danger: #f07167;
+  --sidebar: #07080a;
+  --sidebar-text: #8e959f;
+  --sidebar-active: #1a1d24;
+  --ink-btn: #eceef1;
+  --ink-btn-text: #0a0b0d;
+  --hatch: color-mix(in srgb, #fff 3.5%, transparent);
+  --shadow-float: 0 12px 40px rgba(0, 0, 0, 0.45);
 }
