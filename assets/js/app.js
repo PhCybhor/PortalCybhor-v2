@@ -472,6 +472,24 @@
     }
   }
 
+  function applySidebarCollapsed(collapsed) {
+    const shell = document.getElementById("app-shell");
+    const btn = document.getElementById("btn-sidebar-toggle");
+    if (shell) shell.classList.toggle("is-sidebar-collapsed", Boolean(collapsed));
+    localStorage.setItem("cybhor_sidebar_collapsed", collapsed ? "1" : "0");
+    if (btn) {
+      btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      btn.title = collapsed ? "Expandir menu" : "Encolher menu";
+      btn.textContent = collapsed ? "›" : "‹";
+    }
+  }
+
+  function toggleSidebarCollapsed() {
+    const shell = document.getElementById("app-shell");
+    const next = !(shell && shell.classList.contains("is-sidebar-collapsed"));
+    applySidebarCollapsed(next);
+  }
+
   /* ——— Render ——— */
   function renderAll() {
     const steps = [
@@ -1762,6 +1780,7 @@
 
     document.getElementById("btn-menu")?.addEventListener("click", openMobileNav);
     document.getElementById("sidebar-backdrop")?.addEventListener("click", closeMobileNav);
+    document.getElementById("btn-sidebar-toggle")?.addEventListener("click", toggleSidebarCollapsed);
 
     document.getElementById("btn-export")?.addEventListener("click", () => {
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -2006,6 +2025,7 @@
   document.addEventListener("DOMContentLoaded", async () => {
     const savedTheme = localStorage.getItem("cybhor_theme_v2") || "dark";
     applyTheme(savedTheme, { charts: false });
+    applySidebarCollapsed(localStorage.getItem("cybhor_sidebar_collapsed") === "1");
 
     try {
       wire();
