@@ -6,19 +6,22 @@
   <meta name="description" content="Portal Cybhor v2 — iniciativas, projetos, commits e operação da equipe.">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <title>Portal Cybhor v2</title>
-  <link rel="stylesheet" href="assets/css/theme.css?v=20261028e">
-  <link rel="stylesheet" href="assets/css/base.css?v=20261028e">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/theme.css?v=20261028f">
+  <link rel="stylesheet" href="assets/css/base.css?v=20261028f">
   <style>
-    .boot-screen{min-height:100vh;display:grid;place-items:center;background:#e8e8e6;margin:0}
-    .boot-card{width:min(320px,92vw);background:#fff;border:1px solid #c8c8c4;border-radius:4px;padding:28px 24px;font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif}
-    .boot-card p{margin:18px 0 0;color:#5c5c58}
+    .boot-screen{min-height:100vh;display:grid;place-items:center;background:#eaebed;margin:0}
+    .boot-card{width:min(340px,92vw);background:#fff;border:1px solid #d0d2d6;border-radius:8px;padding:32px 28px;font-family:"Source Sans 3",system-ui,sans-serif}
+    .boot-card p{margin:20px 0 0;color:#5f646c}
     .app-shell.hidden{display:none!important}
     .boot-screen.hidden{display:none!important}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
-  <script src="assets/js/progress-chat.js?v=20261028e" defer></script>
-  <script src="assets/js/team-ops.js?v=20261028e" defer></script>
-  <script src="assets/js/app.js?v=20261028e" defer></script>
+  <script src="assets/js/progress-chat.js?v=20261028f" defer></script>
+  <script src="assets/js/team-ops.js?v=20261028f" defer></script>
+  <script src="assets/js/app.js?v=20261028f" defer></script>
 </head>
 <body>
 
@@ -39,10 +42,10 @@
     <aside class="auth-brand" aria-hidden="true">
       <div class="auth-brand-inner">
         <p class="auth-wordmark">CYBHOR<span>PORTAL</span></p>
-        <h1 class="auth-headline">O dia a dia da equipe, sem planilha perdida.</h1>
-        <p class="auth-lede">Tarefas, GitHub, projetos e contas — com o login que o admin criou pra você.</p>
+        <h1 class="auth-headline">Trabalho da equipe, organizado de verdade.</h1>
+        <p class="auth-lede">Tarefas, GitHub, projetos e dinheiro — um lugar só, com a conta que o admin criou pra você.</p>
       </div>
-      <p class="auth-brand-foot">Cybhor · operação</p>
+      <p class="auth-brand-foot">CYBHOR · OPERAÇÃO</p>
     </aside>
     <div class="auth-panel">
       <form id="login-form" class="auth-card" autocomplete="on">
@@ -125,7 +128,7 @@
       <main class="page">
         <!-- INÍCIO (simples) -->
         <section class="view is-active" data-view="dashboard">
-          <p class="simple-lead">Comece por aqui. O restante fica no menu lateral.</p>
+          <p class="simple-lead">Comece por aqui.</p>
 
           <div class="simple-steps">
             <button type="button" class="simple-step" data-go="tarefas">

@@ -1,53 +1,56 @@
 /*
-  Cybhor Portal — renovação visual (v3)
-  Público: operação interna diária.
-  Fundo: #e8e8e6 / #0c0c0c (neutro, croma ~0).
-  Ação: tinta #0c0c0c; sinal #ff4d00 só na marca e CTA raro.
-  Tipo: Segoe UI Variable / Segoe UI. Raio 2 controles, 4 painéis.
-  Profundidade: borda 1px; sombra só em modal/toast.
+  Cybhor Portal — visual v4
+  Público: equipe interna (ops diário).
+  Fundo: #eaebed / #09090b. Superfícies por luminosidade.
+  Ação: tinta #111; sinal #ff4500 só na marca e destaque raro.
+  Tipo: Syne (marca/títulos) + Source Sans 3 (UI, tabular).
+  Raio: 6 controles, 8 painéis. Profundidade = borda; sombra só modal.
 */
 :root,
 [data-theme="light"] {
-  --bg: #e8e8e6;
+  --bg: #eaebed;
   --surface: #ffffff;
-  --surface-2: #f2f2f0;
-  --border: #c8c8c4;
-  --text: #0c0c0c;
-  --muted: #5c5c58;
-  --accent: #ff4d00;
+  --surface-2: #f3f4f6;
+  --border: #d0d2d6;
+  --text: #111111;
+  --muted: #5f646c;
+  --accent: #ff4500;
   --accent-ink: #ffffff;
-  --ok: #1b7a3a;
-  --warn: #9a6200;
-  --danger: #b91c1c;
-  --sidebar: #0c0c0c;
-  --sidebar-text: #9a9a96;
-  --sidebar-active: #1c1c1c;
-  --ink-btn: #0c0c0c;
+  --ok: #1a7f3c;
+  --warn: #9a6400;
+  --danger: #c01d1d;
+  --sidebar: #0d0d0f;
+  --sidebar-text: #9b9ea6;
+  --sidebar-active: #1a1a1e;
+  --ink-btn: #111111;
   --ink-btn-text: #ffffff;
-  --float: 0 16px 40px rgba(12, 12, 12, 0.14);
-  --sidebar-w: 220px;
-  --topbar-h: 54px;
-  --radius: 4px;
-  --radius-sm: 2px;
-  --font: "Segoe UI Variable", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --float: 0 20px 48px rgba(17, 17, 17, 0.16);
+  --sidebar-w: 240px;
+  --topbar-h: 58px;
+  --radius: 8px;
+  --radius-sm: 6px;
+  --font: "Source Sans 3", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Syne", "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
+  --grid-line: rgba(255, 69, 0, 0.045);
 }
 
 [data-theme="dark"] {
-  --bg: #0c0c0c;
-  --surface: #161616;
-  --surface-2: #1e1e1e;
-  --border: #2e2e2e;
-  --text: #f2f2f0;
-  --muted: #949490;
-  --accent: #ff5c1a;
-  --accent-ink: #0c0c0c;
+  --bg: #09090b;
+  --surface: #141416;
+  --surface-2: #1c1c20;
+  --border: #2a2a30;
+  --text: #f2f2f4;
+  --muted: #989aa3;
+  --accent: #ff5a1f;
+  --accent-ink: #111111;
   --ok: #3dcf6e;
   --warn: #e8b339;
   --danger: #f07167;
-  --sidebar: #050505;
-  --sidebar-text: #8a8a86;
-  --sidebar-active: #1a1a1a;
-  --ink-btn: #f2f2f0;
-  --ink-btn-text: #0c0c0c;
-  --float: 0 16px 40px rgba(0, 0, 0, 0.5);
+  --sidebar: #050506;
+  --sidebar-text: #8e9199;
+  --sidebar-active: #1a1a1e;
+  --ink-btn: #f2f2f4;
+  --ink-btn-text: #09090b;
+  --float: 0 20px 48px rgba(0, 0, 0, 0.55);
+  --grid-line: rgba(255, 90, 31, 0.06);
 }
