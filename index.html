@@ -1,27 +1,27 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="light">
+<html lang="pt-BR" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Portal Cybhor v2 — iniciativas, projetos, commits e operação da equipe.">
+  <meta name="description" content="Portal Cybhor — painel de operação da equipe.">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <title>Portal Cybhor v2</title>
+  <title>Cybhor · Portal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/theme.css?v=20261028f">
-  <link rel="stylesheet" href="assets/css/base.css?v=20261028f">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/theme.css?v=20261028g">
+  <link rel="stylesheet" href="assets/css/base.css?v=20261028g">
   <style>
-    .boot-screen{min-height:100vh;display:grid;place-items:center;background:#eaebed;margin:0}
-    .boot-card{width:min(340px,92vw);background:#fff;border:1px solid #d0d2d6;border-radius:8px;padding:32px 28px;font-family:"Source Sans 3",system-ui,sans-serif}
-    .boot-card p{margin:20px 0 0;color:#5f646c}
+    .boot-screen{min-height:100vh;display:grid;place-items:center;background:#0b0c0e;margin:0}
+    .boot-card{width:min(320px,92vw);background:#13151a;border:1px solid #2a2e38;border-radius:6px;padding:28px;font-family:"IBM Plex Sans",system-ui,sans-serif;color:#eceef2}
+    .boot-card p{margin:16px 0 0;color:#8b919c}
     .app-shell.hidden{display:none!important}
     .boot-screen.hidden{display:none!important}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
-  <script src="assets/js/progress-chat.js?v=20261028f" defer></script>
-  <script src="assets/js/team-ops.js?v=20261028f" defer></script>
-  <script src="assets/js/app.js?v=20261028f" defer></script>
+  <script src="assets/js/progress-chat.js?v=20261028g" defer></script>
+  <script src="assets/js/team-ops.js?v=20261028g" defer></script>
+  <script src="assets/js/app.js?v=20261028g" defer></script>
 </head>
 <body>
 
@@ -41,16 +41,16 @@
   <div id="auth-screen" class="auth-screen hidden" aria-hidden="true">
     <aside class="auth-brand" aria-hidden="true">
       <div class="auth-brand-inner">
-        <p class="auth-wordmark">CYBHOR<span>PORTAL</span></p>
-        <h1 class="auth-headline">Trabalho da equipe, organizado de verdade.</h1>
-        <p class="auth-lede">Tarefas, GitHub, projetos e dinheiro — um lugar só, com a conta que o admin criou pra você.</p>
+        <p class="auth-wordmark">CYBHOR<span>OPS</span></p>
+        <h1 class="auth-headline">O que fazer agora. Sem ruído.</h1>
+        <p class="auth-lede">Fila do dia, tarefas, GitHub e contas — no ritmo de um Linear interno.</p>
       </div>
-      <p class="auth-brand-foot">CYBHOR · OPERAÇÃO</p>
+      <p class="auth-brand-foot">cybhor.app / portal</p>
     </aside>
     <div class="auth-panel">
       <form id="login-form" class="auth-card" autocomplete="on">
         <div class="auth-mobile-brand">
-          <p class="auth-wordmark">CYBHOR<span>PORTAL</span></p>
+          <p class="auth-wordmark">CYBHOR<span>OPS</span></p>
         </div>
         <h2 class="auth-title">Entrar</h2>
         <p class="meta">Use o e-mail e a senha da sua conta.</p>
@@ -80,19 +80,22 @@
         </div>
       </div>
       <nav class="side-nav" aria-label="Principal">
-        <button type="button" class="is-active" data-view="dashboard">Início</button>
-        <button type="button" data-view="foco">Hoje</button>
-        <button type="button" data-view="tarefas">Tarefas</button>
+        <div class="side-label">Trabalho</div>
+        <button type="button" class="is-active" data-view="dashboard">Painel</button>
+        <button type="button" data-view="foco">Minha fila</button>
+        <button type="button" data-view="tarefas">Quadro</button>
         <button type="button" data-view="projetos">Projetos</button>
+        <div class="side-label">Código</div>
         <button type="button" data-view="desenvolvimento">GitHub</button>
+        <button type="button" data-view="assistente">Atualizar status</button>
+        <div class="side-label" data-admin-only hidden>Gestão</div>
         <button type="button" data-view="admin" data-admin-only hidden>Usuários</button>
-        <div class="side-label">Mais</div>
         <button type="button" data-view="equipes" data-admin-only hidden>Equipes</button>
         <button type="button" data-view="iniciativas" data-admin-only hidden>Campanhas</button>
-        <button type="button" data-view="assistente">Chat</button>
-        <button type="button" data-view="financeiro" data-admin-only hidden>Dinheiro</button>
+        <button type="button" data-view="financeiro" data-admin-only hidden>Financeiro</button>
+        <div class="side-label">Mais</div>
         <button type="button" data-view="ideias">Ideias</button>
-        <button type="button" data-view="atividade">Histórico</button>
+        <button type="button" data-view="atividade">Atividade</button>
       </nav>
       <div class="side-foot">
         <button class="btn btn-sm side-foot-btn" type="button" id="btn-logout">Sair</button>
@@ -105,8 +108,8 @@
         <div class="topbar-left">
           <button class="icon-btn menu-toggle" id="btn-menu" type="button" aria-label="Menu">☰</button>
           <div class="topbar-titles">
-            <h1 id="page-title">Início</h1>
-            <p class="topbar-sub">Operação da equipe</p>
+            <h1 id="page-title">Painel</h1>
+            <p class="topbar-sub">ops · cybhor</p>
           </div>
         </div>
         <div class="search">
@@ -126,78 +129,93 @@
       </header>
 
       <main class="page">
-        <!-- INÍCIO (simples) -->
+        <!-- PAINEL (ops home — Linear/GitLab style) -->
         <section class="view is-active" data-view="dashboard">
-          <p class="simple-lead">Comece por aqui.</p>
-
-          <div class="simple-steps">
-            <button type="button" class="simple-step" data-go="tarefas">
-              <span class="simple-num">1</span>
-              <strong>Tarefas</strong>
-              <span>O que fazer · arraste para Concluído</span>
-            </button>
-            <button type="button" class="simple-step" data-go="foco">
-              <span class="simple-num">2</span>
-              <strong>Hoje</strong>
-              <span>Lista do que fazer agora</span>
-            </button>
-            <button type="button" class="simple-step" data-go="desenvolvimento">
-              <span class="simple-num">3</span>
-              <strong>GitHub</strong>
-              <span>Vincule sua conta e veja o resumo</span>
-            </button>
+          <div class="ops-hero">
+            <div>
+              <h2>Painel</h2>
+              <p>Visão do dia: fila, métricas e atividade — como no Linear.</p>
+            </div>
+            <div class="actions">
+              <button class="btn btn-accent" type="button" id="btn-add-task">+ Tarefa</button>
+              <button class="btn" type="button" id="btn-add-project">+ Projeto</button>
+              <button class="btn" type="button" data-go="desenvolvimento">GitHub</button>
+            </div>
           </div>
 
-          <div class="grid grid-2" style="margin-top:16px">
+          <div class="stat-strip">
+            <div class="stat">
+              <div class="label">ABERTAS</div>
+              <div class="value" id="kpi-tasks">0</div>
+              <div class="hint">tarefas ativas</div>
+            </div>
+            <div class="stat">
+              <div class="label">CONCLUSÃO</div>
+              <div class="value" id="kpi-rate">0%</div>
+              <div class="hint">do total</div>
+            </div>
+            <div class="stat">
+              <div class="label">PROJETOS</div>
+              <div class="value" id="kpi-projects">0</div>
+              <div class="hint">em andamento</div>
+            </div>
+            <div class="stat">
+              <div class="label">SALDO</div>
+              <div class="value" id="kpi-balance">R$ 0</div>
+              <div class="hint">financeiro</div>
+            </div>
+          </div>
+
+          <div class="grid grid-2">
             <section class="panel">
               <div class="panel-head">
-                <h2>Fazer agora</h2>
-                <button class="btn btn-sm" type="button" data-go="foco">Ver lista</button>
+                <h2>Próxima ação</h2>
+                <button class="btn btn-sm" type="button" data-go="foco">Abrir fila</button>
               </div>
               <div id="focus-next"></div>
             </section>
             <section class="panel">
               <div class="panel-head">
-                <h2>Ranking da semana</h2>
+                <h2>Pontos (7 dias)</h2>
+                <button class="btn btn-sm" type="button" data-go="equipes" data-admin-only hidden>Equipes</button>
               </div>
               <div id="workload-list"></div>
             </section>
           </div>
 
-          <div class="actions" style="margin-top:16px">
-            <button class="btn btn-primary" type="button" id="btn-add-task">+ Nova tarefa</button>
-            <button class="btn" type="button" id="btn-add-project">+ Projeto</button>
-            <button class="btn" type="button" data-go="desenvolvimento">Resumo GitHub</button>
+          <div class="grid grid-2" style="margin-top:12px">
+            <section class="panel">
+              <div class="panel-head"><h2>Agenda</h2><button class="btn btn-sm" type="button" id="btn-add-event">+ Compromisso</button></div>
+              <div id="events-list"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-head"><h2>Atividade</h2><button class="btn btn-sm" type="button" data-go="atividade">Ver tudo</button></div>
+              <div id="activity-preview" class="activity-list"></div>
+            </section>
           </div>
 
-          <!-- IDs ocultos para o JS continuar funcionando -->
           <div class="hidden" aria-hidden="true">
-            <span id="kpi-tasks"></span><span id="kpi-rate"></span><span id="kpi-projects"></span><span id="kpi-balance"></span>
             <div id="okr-ring" style="--pct:0"><span id="okr-overall"></span></div>
             <span id="okr-client-val"></span><div id="okr-client-bar"></div>
             <span id="okr-delivery-val"></span><div id="okr-delivery-bar"></div>
             <span id="okr-finance-val"></span><div id="okr-finance-bar"></div>
             <canvas id="chart-performance"></canvas>
-            <div id="events-list"></div>
-            <div id="activity-preview"></div>
             <div id="notices-list"></div>
             <div id="projects-body"></div>
-            <span id="count-todo"></span><span id="count-doing"></span><span id="count-done"></span>
             <div id="kanban-todo"></div><div id="kanban-doing"></div><div id="kanban-done"></div>
-            <button type="button" id="btn-add-event"></button>
             <button type="button" id="btn-add-notice"></button>
           </div>
         </section>
 
-        <!-- HOJE -->
+        <!-- MINHA FILA -->
         <section class="view" data-view="foco">
           <div class="page-head">
             <div>
-              <p class="lead" style="margin:0">O que fazer hoje, na ordem certa. Clique em <strong>Concluir</strong> quando terminar.</p>
+              <p class="lead" style="margin:0">Fila priorizada (atrasadas → hoje → próximas). Conclua e ganhe pontos.</p>
             </div>
-            <button class="btn btn-primary" type="button" onclick="document.getElementById('btn-add-task').click()">+ Tarefa</button>
+            <button class="btn btn-accent" type="button" onclick="document.getElementById('btn-add-task').click()">+ Tarefa</button>
           </div>
-          <div class="chat-live" id="focus-summary" style="margin-bottom:16px"></div>
+          <div class="chat-live" id="focus-summary" style="margin-bottom:12px"></div>
           <section class="panel">
             <div id="focus-list"></div>
           </section>
@@ -285,17 +303,22 @@
           </section>
         </section>
 
-        <!-- TAREFAS -->
+        <!-- QUADRO -->
         <section class="view" data-view="tarefas">
           <div class="page-head">
-            <div><p class="lead" style="margin:0">Arraste o card para <strong>Concluído</strong> quando terminar.</p></div>
-            <button class="btn btn-primary" type="button" onclick="document.getElementById('btn-add-task').click()">+ Tarefa</button>
+            <div><p class="lead" style="margin:0">Quadro tipo Linear/Trello: arraste entre colunas ou conclua com OK.</p></div>
+            <button class="btn btn-accent" type="button" onclick="document.getElementById('btn-add-task').click()">+ Tarefa</button>
           </div>
-          <section class="panel">
+          <div class="filter-bar" id="task-filters" role="group" aria-label="Filtro do quadro">
+            <button type="button" class="filter-chip is-on" data-task-filter="all">Todas</button>
+            <button type="button" class="filter-chip" data-task-filter="mine">Minhas</button>
+            <button type="button" class="filter-chip" data-task-filter="high">Alta</button>
+          </div>
+          <section class="panel" style="padding:12px">
             <div class="kanban">
-              <div class="kanban-col" data-column="todo"><h3>Para fazer</h3><div id="kanban-todo-dup"></div></div>
-              <div class="kanban-col" data-column="doing"><h3>Em andamento</h3><div id="kanban-doing-dup"></div></div>
-              <div class="kanban-col" data-column="done"><h3>Concluído</h3><div id="kanban-done-dup"></div></div>
+              <div class="kanban-col" data-column="todo"><h3>Backlog <span class="count" id="count-todo">0</span></h3><div id="kanban-todo-dup"></div></div>
+              <div class="kanban-col" data-column="doing"><h3>Em progresso <span class="count" id="count-doing">0</span></h3><div id="kanban-doing-dup"></div></div>
+              <div class="kanban-col" data-column="done"><h3>Done <span class="count" id="count-done">0</span></h3><div id="kanban-done-dup"></div></div>
             </div>
           </section>
         </section>
@@ -303,7 +326,7 @@
         <!-- GITHUB -->
         <section class="view" data-view="desenvolvimento">
           <div class="page-head">
-            <div><p class="lead" style="margin:0">Vincule o seu GitHub. O portal confere a conta e escreve o resumo — você não preenche relatório.</p></div>
+            <div><p class="lead" style="margin:0">Vínculo GitHub → resumo automático dos commits (sem relatório manual).</p></div>
           </div>
           <div class="chat-layout">
             <section class="panel">

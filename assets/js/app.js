@@ -420,19 +420,21 @@
 
   /* ——— Views ——— */
   const VIEW_TITLES = {
-    dashboard: "Início",
-    foco: "Hoje",
+    dashboard: "Painel",
+    foco: "Minha fila",
     equipes: "Equipes",
     admin: "Usuários",
     iniciativas: "Campanhas",
     projetos: "Projetos",
-    tarefas: "Tarefas",
+    tarefas: "Quadro",
     desenvolvimento: "GitHub",
-    assistente: "Chat",
-    financeiro: "Dinheiro",
+    assistente: "Atualizar status",
+    financeiro: "Financeiro",
     ideias: "Ideias",
-    atividade: "Histórico",
+    atividade: "Atividade",
   };
+
+  let taskFilter = "all";
 
   function switchView(name) {
     const adminViews = new Set(["admin", "equipes", "iniciativas", "financeiro"]);
@@ -577,7 +579,11 @@
         : '<div class="list-empty">Nenhuma tarefa aberta.</div>';
     }
     if (!queue.length) {
-      box.innerHTML = '<div class="list-empty">Sem tarefas abertas.</div>';
+      box.innerHTML =
+        '<div class="list-empty">Fila limpa. <button class="btn btn-sm btn-accent" type="button" id="btn-focus-empty-add" style="margin-top:10px">+ Nova tarefa</button></div>';
+      document.getElementById("btn-focus-empty-add")?.addEventListener("click", () => {
+        document.getElementById("btn-add-task")?.click();
+      });
       return;
     }
     box.innerHTML = queue
@@ -1211,23 +1217,36 @@
     const openProjects = data.projects.filter((p) => p.status !== "done").length;
     const balance = data.finance.reduce((acc, f) => acc + (f.type === "in" ? f.amount : -f.amount), 0);
 
-    document.getElementById("kpi-tasks").textContent = String(activeTasks);
-    document.getElementById("kpi-rate").textContent = rate + "%";
-    document.getElementById("kpi-projects").textContent = String(openProjects);
-    document.getElementById("kpi-balance").textContent = money(balance);
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    };
+    set("kpi-tasks", String(activeTasks));
+    set("kpi-rate", rate + "%");
+    set("kpi-projects", String(openProjects));
+    set("kpi-balance", money(balance));
   }
 
   function renderOkrs() {
     const o = data.okrs;
     const ring = document.getElementById("okr-ring");
+    if (!ring) return;
     ring.style.setProperty("--pct", o.overall);
-    document.getElementById("okr-overall").textContent = o.overall + "%";
-    document.getElementById("okr-client-val").textContent = o.client + "%";
-    document.getElementById("okr-client-bar").style.width = o.client + "%";
-    document.getElementById("okr-delivery-val").textContent = o.delivery + "%";
-    document.getElementById("okr-delivery-bar").style.width = o.delivery + "%";
-    document.getElementById("okr-finance-val").textContent = o.finance + "%";
-    document.getElementById("okr-finance-bar").style.width = o.finance + "%";
+    const setTxt = (id, v) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = v;
+    };
+    const setW = (id, v) => {
+      const el = document.getElementById(id);
+      if (el) el.style.width = v;
+    };
+    setTxt("okr-overall", o.overall + "%");
+    setTxt("okr-client-val", o.client + "%");
+    setW("okr-client-bar", o.client + "%");
+    setTxt("okr-delivery-val", o.delivery + "%");
+    setW("okr-delivery-bar", o.delivery + "%");
+    setTxt("okr-finance-val", o.finance + "%");
+    setW("okr-finance-bar", o.finance + "%");
   }
 
   function renderEvents() {
@@ -1292,10 +1311,21 @@
       </div>`;
   }
 
+  function filteredTasks() {
+    return (data.tasks || []).filter((t) => {
+      if (taskFilter === "mine") return String(t.assigneeId) === myId();
+      if (taskFilter === "high") return String(t.priority || "").toLowerCase() === "alta";
+      return true;
+    });
+  }
+
   function renderKanban() {
+    const tasks = filteredTasks();
     ["todo", "doing", "done"].forEach((col) => {
-      const items = data.tasks.filter((t) => t.column === col);
-      const html = items.map(taskCardHtml).join("");
+      const items = tasks.filter((t) => t.column === col);
+      const html = items.length
+        ? items.map(taskCardHtml).join("")
+        : '<div class="list-empty" style="padding:16px;font-size:0.8rem">Vazio</div>';
       const count = document.getElementById("count-" + col);
       if (count) count.textContent = String(items.length);
       const list = document.getElementById("kanban-" + col);
@@ -1678,7 +1708,7 @@
   /* ——— Theme ——— */
   function applyTheme(theme, { charts = true } = {}) {
     document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("cybhor_theme", theme);
+    localStorage.setItem("cybhor_theme_v2", theme);
     if (charts) {
       try {
         buildCharts();
@@ -1718,6 +1748,16 @@
 
     document.querySelectorAll("[data-go]").forEach((btn) => {
       btn.addEventListener("click", () => switchView(btn.getAttribute("data-go")));
+    });
+
+    document.querySelectorAll("[data-task-filter]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        taskFilter = btn.getAttribute("data-task-filter") || "all";
+        document.querySelectorAll("[data-task-filter]").forEach((b) => {
+          b.classList.toggle("is-on", b === btn);
+        });
+        renderKanban();
+      });
     });
 
     document.getElementById("btn-menu")?.addEventListener("click", openMobileNav);
@@ -1964,7 +2004,7 @@
   }
 
   document.addEventListener("DOMContentLoaded", async () => {
-    const savedTheme = localStorage.getItem("cybhor_theme") || "light";
+    const savedTheme = localStorage.getItem("cybhor_theme_v2") || "dark";
     applyTheme(savedTheme, { charts: false });
 
     try {
